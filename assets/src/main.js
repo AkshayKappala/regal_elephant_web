@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const navbarDiv = document.getElementById("navbar");
 
     // Load navbar dynamically
-    fetch("partials/navbar.html")
+    fetch("partials/navbar.php")
         .then((response) => response.text())
         .then((html) => {
             navbarDiv.innerHTML = html;
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load content dynamically
     const loadContent = (page) => {
-        fetch(`views/${page}.html`)
+        fetch(`views/${page}.php`)
             .then((response) => response.text())
             .then((html) => {
                 contentDiv.innerHTML = html;
