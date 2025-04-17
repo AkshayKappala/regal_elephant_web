@@ -25,3 +25,6 @@
 /vendors/*
 
 /temp/*
+
+# Environment files
+.env
