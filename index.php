@@ -1,3 +1,16 @@
+<?php
+// Load environment variables from .env file
+if (file_exists(__DIR__ . '/.env')) {
+    $lines = file(__DIR__ . '/.env');
+    foreach ($lines as $line) {
+        putenv(trim($line));
+    }
+}
+
+// Include database configuration
+require_once __DIR__ . '/config/database.php';
+?>
+
 <!doctype html>
 <html lang="en">
 
