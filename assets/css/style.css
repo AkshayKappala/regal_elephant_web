@@ -1,3 +1,18 @@
 body {
     font-family: "Marko One", serif;
+    background-color: #003e43;
+    color: #eadab0;
+}
+
+.navbar-nav .nav-link {
+    color: #eadab0; 
+}
+
+.navbar-nav .nav-link:hover {
+    color: #f0e6c1; 
+}
+
+.navbar-nav .nav-link.active {
+    color: #eadab0; 
+    text-decoration: underline; 
 }
