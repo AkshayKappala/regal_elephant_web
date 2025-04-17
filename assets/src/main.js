@@ -1,9 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
     const contentDiv = document.getElementById("content");
+    const navbarDiv = document.getElementById("navbar");
+
+    // Load navbar dynamically
+    fetch("partials/navbar.html")
+        .then((response) => response.text())
+        .then((html) => {
+            navbarDiv.innerHTML = html;
+        })
+        .catch((error) => {
+            console.error("Error loading navbar:", error);
+        });
 
     // Load content dynamically
     const loadContent = (page) => {
-        fetch(`assets/js/pages/${page}.html`)
+        fetch(`views/${page}.html`)
             .then((response) => response.text())
             .then((html) => {
                 contentDiv.innerHTML = html;
