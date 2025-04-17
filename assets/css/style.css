@@ -5,6 +5,7 @@ body {
 }
 
 .navbar-nav .nav-link {
+    font-family: "Fredoka", sans-serif;
     color: #eadab0;
     transition: all 0.3s ease;
 }
@@ -19,7 +20,14 @@ body {
     text-decoration: underline;
 }
 
+
+.title-home {
+    font-family: "League Gothic", sans-serif;
+    font-size: 10rem;
+}
+
 .btn-home {
+    font-family: "Fredoka", sans-serif;
     background-color: #eadab0;
     color: #a04b25;
     border: none;
@@ -32,4 +40,9 @@ body {
 .btn-home:hover {
     background-color: #f5e7c8;
     color: #a04b25;
+}
+
+.btn-home:active {  
+    color: #a04b25;
+    text-decoration: underline;
 }
