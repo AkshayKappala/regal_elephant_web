@@ -2,6 +2,7 @@ body {
     font-family: "Marko One", serif;
     background-color: #003e43;
     color: #eadab0;
+    overflow: hidden; /* Prevent scrolling */
 }
 
 .navbar-nav .nav-link {
@@ -45,4 +46,17 @@ body {
 .btn-home:active {  
     color: #a04b25;
     text-decoration: underline;
+}
+
+.center-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.center-content .title-home {
+    margin-bottom: 6rem; 
 }
