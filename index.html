@@ -14,6 +14,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Marko+One&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Inline styles for index page only -->
+    <style> 
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .center-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 8rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -36,6 +53,12 @@
             </div>
         </div>
     </nav>
+
+    <!-- Title and Button -->
+    <div class="center-content">
+        <h1 class="display-3 text-center">Regal Elephant</h1>
+        <a href="#" class="btn btn-home">View & Order</a>
+    </div>
 
     <!--Place this script at the end of the body for bootstrap to work-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
