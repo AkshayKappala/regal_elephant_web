@@ -7,7 +7,11 @@ class Database {
         if (!$envLoaded && file_exists(__DIR__ . '/../.env')) {
             $lines = file(__DIR__ . '/../.env');
             foreach ($lines as $line) {
-                putenv(trim($line));
+                // Only set environment variables if they are not already set
+                [$key, $value] = explode('=', trim($line), 2);
+                if (!getenv($key)) {
+                    putenv("$key=$value");
+                }
             }
             $envLoaded = true;
         }
