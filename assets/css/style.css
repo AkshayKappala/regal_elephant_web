@@ -2,7 +2,7 @@ body {
     font-family: "Marko One", serif;
     background-color: #003e43;
     color: #eadab0;
-    overflow: hidden; /* Prevent scrolling */
+    overflow: hidden;
 }
 
 .navbar-nav .nav-link {
@@ -43,7 +43,7 @@ body {
     color: #a04b25;
 }
 
-.btn-home:active {  
+.btn-home:active {
     color: #a04b25;
     text-decoration: underline;
 }
@@ -58,5 +58,42 @@ body {
 }
 
 .center-content .title-home {
-    margin-bottom: 6rem; 
+    margin-bottom: 6rem;
+}
+
+/* Explore Page Specific Styles */
+
+.category-label {
+    color: #eadab0;
+    font-family: "League Gothic", sans-serif;
+    font-size: 2rem;
+    padding-bottom: 0.5rem;
+}
+
+.category-card-col {
+    min-width: 220px;
+    max-width: 280px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+div.category-card {
+    background-color: #eadab0;
+    color: #a04b25;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+div.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.3); 
+}
+
+div.category-card h5.card-title {
+    font-family: "Fredoka", sans-serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #a04b25;
 }
