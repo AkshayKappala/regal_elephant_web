@@ -2,7 +2,6 @@ body {
     font-family: "Marko One", serif;
     background-color: #003e43;
     color: #eadab0;
-    overflow: hidden;
 }
 
 .navbar-nav .nav-link {
@@ -21,13 +20,12 @@ body {
     text-decoration: underline;
 }
 
-
 .title-home {
     font-family: "League Gothic", sans-serif;
     font-size: 10rem;
 }
 
-.btn-home {
+.btn-custom {
     font-family: "Fredoka", sans-serif;
     background-color: #eadab0;
     color: #a04b25;
@@ -38,12 +36,14 @@ body {
     transition: all 0.3s ease;
 }
 
-.btn-home:hover {
-    background-color: #f5e7c8;
+.btn-custom:hover {
+    transform: translateY(-5px);
+    background-color: #eadab0;
     color: #a04b25;
+    box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.3);
 }
 
-.btn-home:active {
+.btn-custom:active {
     color: #a04b25;
     text-decoration: underline;
 }
@@ -61,8 +61,6 @@ body {
     margin-bottom: 6rem;
 }
 
-/* Explore Page Specific Styles */
-
 .category-label {
     color: #eadab0;
     font-family: "League Gothic", sans-serif;
@@ -70,30 +68,31 @@ body {
     padding-bottom: 0.5rem;
 }
 
-.category-card-col {
-    min-width: 220px;
-    max-width: 280px;
-    padding-left: 10px;
-    padding-right: 10px;
+#category-content .btn-custom {
+    padding: 1rem 2rem;
+    min-height: 80px;
+    white-space: normal;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
 }
 
-div.category-card {
-    background-color: #eadab0;
-    color: #a04b25;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-div.category-card:hover {
+#category-content .btn-custom:hover {
     transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.3); 
+    box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.3);
 }
 
-div.category-card h5.card-title {
-    font-family: "Fredoka", sans-serif;
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: #a04b25;
+#category-content .btn-custom:active {
+    transform: translateY(-2px);
+    box-shadow: 0 0.2rem 0.5rem rgba(234, 218, 176, 0.15);
+}
+
+.category-row {
+     align-items: stretch;
+}
+
+.category-row .col-auto {
+    display: flex;
 }

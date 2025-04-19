@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../config/database.php';
 $mysqli = Database::getConnection();
 
-// Define the structure for the rows and their categories
 $categoryGroups = [
     "Starters" => ["Veg Starter", "Non-Veg Starter", "Veg Tandoori", "Non-Veg Tandoori"],
     "Main Course" => ["Veg Soup","Non-Veg Soup", "Veg Entree", "Non-Veg Entree", "Veg Noodles", "Non-Veg Noodles", "Veg Fried Rice", "Non-Veg Fried Rice", "Veg Biryani", "Non-Veg Biryani"],
@@ -65,22 +64,17 @@ foreach ($categoryGroups as $label => $categoriesInGroup) {
 
 function renderCategoryRow($categories) {
     if (empty($categories)) return;
-    echo '<div class="row category-row flex-nowrap overflow-auto mb-4 pb-3 pt-2">';
+    echo '<div class="row category-row flex-nowrap overflow-auto mb-4 pb-3 pt-3">';
     foreach ($categories as $category) {
-        echo '<div class="col-auto category-card-col">';
-        echo '<div class="card h-100 shadow-sm category-card">';
-        echo '<div class="card-body d-flex align-items-center justify-content-center p-3">';
-        echo '<h5 class="card-title text-center mb-0">' . htmlspecialchars($category) . '</h5>';
-        echo '</div></div></div>';
+        echo '<div class="col-auto">';
+        echo '<a href="#" class="btn btn-custom m-1" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
+        echo '</div>';
     }
     echo '</div>';
 }
 
-function renderCategoryCard($category) {
-    echo '<div class="card h-100 shadow-sm category-card">';
-    echo '<div class="card-body d-flex align-items-center justify-content-center p-3">';
-    echo '<h5 class="card-title text-center mb-0">' . htmlspecialchars($category) . '</h5>';
-    echo '</div></div>';
+function renderCategoryButton($category) {
+    echo '<a href="#" class="btn btn-custom w-100 h-100 d-flex align-items-center justify-content-center" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
 }
 
 ?>
@@ -106,11 +100,11 @@ function renderCategoryCard($category) {
                         $firstRow = array_slice($mainCourseCategories, 0, 5);
                         $remaining = array_slice($mainCourseCategories, 5);
                     ?>
-                    
+
                     <div class="row mb-3">
                         <?php foreach ($firstRow as $category): ?>
                             <div class="col-6 col-sm-4 col-md-2 mb-3">
-                                <?php renderCategoryCard($category); ?>
+                                <?php renderCategoryButton($category); ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -119,7 +113,7 @@ function renderCategoryCard($category) {
                         <div class="row">
                             <?php foreach ($remaining as $category): ?>
                                 <div class="col-6 col-sm-4 col-md-2 mb-3">
-                                    <?php renderCategoryCard($category); ?>
+                                    <?php renderCategoryButton($category); ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
