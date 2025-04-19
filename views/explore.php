@@ -64,7 +64,7 @@ foreach ($categoryGroups as $label => $categoriesInGroup) {
 
 function renderCategoryRow($categories) {
     if (empty($categories)) return;
-    echo '<div class="row category-row flex-nowrap overflow-auto mb-4 pb-3 pt-3">';
+    echo '<div class="row flex-nowrap overflow-auto mb-4 pb-3 pt-1">';
     foreach ($categories as $category) {
         echo '<div class="col-auto">';
         echo '<a href="#" class="btn btn-custom m-1" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
@@ -74,7 +74,7 @@ function renderCategoryRow($categories) {
 }
 
 function renderCategoryButton($category) {
-    echo '<a href="#" class="btn btn-custom w-100 h-100 d-flex align-items-center justify-content-center" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
+    echo '<a href="#" class="btn btn-custom w-100 d-flex align-items-center justify-content-center" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
 }
 
 ?>
@@ -85,7 +85,7 @@ function renderCategoryButton($category) {
         <?php if (!empty($layoutGroups['Starters'])): ?>
             <div class="row mb-4">
                 <div class="col-12">
-                    <h3 class="mt-4 mb-3 category-label">Starters</h3>
+                    <h3 class="mt-4 mb-2 category-label">Starters</h3>
                     <?php renderCategoryRow($layoutGroups['Starters']); ?>
                 </div>
             </div>
@@ -126,14 +126,14 @@ function renderCategoryButton($category) {
             <div class="row mb-4">
                 <?php if (!empty($layoutGroups['Breads'])): ?>
                     <div class="col-md-4">
-                        <h3 class="mt-4 mb-3 category-label">Breads</h3>
+                        <h3 class="mt-4 mb-2 category-label">Breads</h3>
                         <?php renderCategoryRow($layoutGroups['Breads']); ?>
                     </div>
                 <?php endif; ?>
 
                 <?php if (!empty($layoutGroups['Desserts & Beverages'])): ?>
                     <div class="col-md-8">
-                        <h3 class="mt-4 mb-3 category-label">Desserts & Beverages</h3>
+                        <h3 class="mt-4 mb-2 category-label">Desserts & Beverages</h3>
                         <?php renderCategoryRow($layoutGroups['Desserts & Beverages']); ?>
                     </div>
                 <?php endif; ?>

@@ -45,6 +45,7 @@ body {
 
 .btn-custom:active {
     color: #a04b25;
+    background-color: #eadab0;
     text-decoration: underline;
 }
 
@@ -53,7 +54,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 80vh;
     text-align: center;
 }
 
@@ -63,9 +64,8 @@ body {
 
 .category-label {
     color: #eadab0;
-    font-family: "League Gothic", sans-serif;
+    font-family: "Marko One", serif;
     font-size: 2rem;
-    padding-bottom: 0.5rem;
 }
 
 #category-content .btn-custom {
@@ -82,17 +82,4 @@ body {
 #category-content .btn-custom:hover {
     transform: translateY(-5px);
     box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.3);
-}
-
-#category-content .btn-custom:active {
-    transform: translateY(-2px);
-    box-shadow: 0 0.2rem 0.5rem rgba(234, 218, 176, 0.15);
-}
-
-.category-row {
-     align-items: stretch;
-}
-
-.category-row .col-auto {
-    display: flex;
 }
