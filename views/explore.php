@@ -67,14 +67,14 @@ function renderCategoryRow($categories) {
     echo '<div class="row flex-nowrap overflow-auto mb-4 pb-3 pt-1">';
     foreach ($categories as $category) {
         echo '<div class="col-auto">';
-        echo '<a href="#" class="btn btn-custom m-1" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
+        echo '<a href="#" class="btn btn-custom m-1" data-page="menu" data-category-target="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
         echo '</div>';
     }
     echo '</div>';
 }
 
 function renderCategoryButton($category) {
-    echo '<a href="#" class="btn btn-custom w-100 d-flex align-items-center justify-content-center" data-page="menu" data-category="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
+    echo '<a href="#" class="btn btn-custom w-100 d-flex align-items-center justify-content-center" data-page="menu" data-category-target="' . htmlspecialchars($category) . '">' . htmlspecialchars($category) . '</a>';
 }
 
 ?>
