@@ -211,25 +211,29 @@ body {
     opacity: 0;
     visibility: hidden;
     position: fixed;
-    bottom: 80px; /* Position above the Go to Top button */
-    right: -100px; /* Start off-screen */
-    z-index: 98; /* Slightly lower z-index than Go to Top if needed */
+    bottom: 90px; /* Increased bottom position */
+    right: -150px; /* Adjust initial off-screen position if needed */
+    z-index: 98;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 8px 16px; /* Rectangular padding */
-    border-radius: 20px; /* Rounded corners */
-    font-size: 1rem; /* Adjust font size as needed */
-    line-height: 1.2;
+    padding: 12px 24px; /* Increased padding */
+    border-radius: 30px; /* Adjusted border-radius */
+    font-size: 1.2rem; /* Increased font size */
+    line-height: 1.3;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     transition: right 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
+    background-color: #eadab0;
+    color: #a04b25;
 }
 
 .btn-go-cart.show {
     opacity: 1;
     visibility: visible;
     right: 30px; /* Slide in */
+    background-color: #eadab0;
+    color: #a04b25;
 }
 
 .btn-go-cart:hover {
