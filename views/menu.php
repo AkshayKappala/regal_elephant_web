@@ -81,17 +81,25 @@ function slugify($text) {
                         <div id="<?php echo $categoryId; ?>" class="mb-4 category-section">
                             <h3 class="category-label mb-3"><?php echo htmlspecialchars($category); ?></h3>
                             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                                <?php foreach ($menuItemsByCategory[$category] as $item): ?>
+                                <?php foreach ($menuItemsByCategory[$category] as $idx => $item): ?>
+                                    <?php $itemId = 'menu-item-' . slugify($category) . '-' . $idx; ?>
                                     <div class="col">
-                                        <div class="card h-100 menu-item-card">
+                                        <div class="card h-100 menu-item-card explore-item-card">
                                             <div class="card-body">
                                                 <h5 class="card-title menu-item-name"><?php echo $item['name']; ?></h5>
                                                 <?php if (!empty($item['description'])): ?>
                                                     <p class="card-text menu-item-description"><?php echo $item['description']; ?></p>
                                                 <?php endif; ?>
                                             </div>
-                                            <div class="card-footer menu-item-footer">
-                                                <span class="menu-item-price">$<?php echo number_format($item['price'], 2); ?></span>
+                                            <div class="card-footer menu-item-footer d-flex justify-content-between align-items-center">
+                                                <span class="menu-item-price fw-bold">&#8377;<?php echo number_format($item['price'], 2); ?></span>
+                                                <div class="quantity-widget" data-item="<?php echo $itemId; ?>" 
+                                                     data-name="<?php echo htmlspecialchars($item['name'], ENT_QUOTES); ?>" 
+                                                     data-price="<?php echo htmlspecialchars($item['price'], ENT_QUOTES); ?>">
+                                                    <button type="button" class="btn btn-sm qty-btn" data-action="decrement" disabled>-</button>
+                                                    <span class="qty-value mx-2" id="<?php echo $itemId; ?>-qty">0</span>
+                                                    <button type="button" class="btn btn-sm qty-btn" data-action="increment">+</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -139,17 +147,25 @@ function slugify($text) {
                      <div id="<?php echo $categoryId; ?>" class="mb-4 category-section">
                          <h3 class="category-label mb-3"><?php echo htmlspecialchars($category); ?></h3>
                          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                             <?php foreach ($menuItemsByCategory[$category] as $item): ?>
+                             <?php foreach ($menuItemsByCategory[$category] as $idx => $item): ?>
+                                 <?php $itemId = 'menu-item-' . slugify($category) . '-other-' . $idx; ?>
                                  <div class="col">
-                                     <div class="card h-100 menu-item-card">
+                                     <div class="card h-100 menu-item-card explore-item-card">
                                          <div class="card-body">
                                              <h5 class="card-title menu-item-name"><?php echo $item['name']; ?></h5>
                                              <?php if (!empty($item['description'])): ?>
                                                  <p class="card-text menu-item-description"><?php echo $item['description']; ?></p>
                                              <?php endif; ?>
                                          </div>
-                                         <div class="card-footer menu-item-footer">
-                                             <span class="menu-item-price">$<?php echo number_format($item['price'], 2); ?></span>
+                                         <div class="card-footer menu-item-footer d-flex justify-content-between align-items-center">
+                                             <span class="menu-item-price fw-bold">&#8377;<?php echo number_format($item['price'], 2); ?></span>
+                                             <div class="quantity-widget" data-item="<?php echo $itemId; ?>" 
+                                                  data-name="<?php echo htmlspecialchars($item['name'], ENT_QUOTES); ?>" 
+                                                  data-price="<?php echo htmlspecialchars($item['price'], ENT_QUOTES); ?>">
+                                                 <button type="button" class="btn btn-sm qty-btn" data-action="decrement" disabled>-</button>
+                                                 <span class="qty-value mx-2" id="<?php echo $itemId; ?>-qty">0</span>
+                                                 <button type="button" class="btn btn-sm qty-btn" data-action="increment">+</button>
+                                             </div>
                                          </div>
                                      </div>
                                  </div>
@@ -167,53 +183,3 @@ function slugify($text) {
     <?php endif; ?>
 
 </div>
-
-<style>
-    .title-menu {
-        font-family: "League Gothic", sans-serif;
-        font-size: 5rem;
-        color: #eadab0;
-    }
-    .category-group-label {
-        font-family: "Marko One", serif;
-        color: #f5e7c8;
-        font-size: 2.5rem;
-        border-bottom: 2px solid #a04b25;
-        padding-bottom: 0.5rem;
-    }
-    .category-label {
-        color: #eadab0;
-        font-family: "Marko One", serif;
-        font-size: 2rem;
-    }
-    .menu-item-card {
-        background-color: #004f55;
-        border: 1px solid #a04b25;
-        color: #eadab0;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .menu-item-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.2);
-    }
-    .menu-item-name {
-        font-family: "Fredoka", sans-serif;
-        font-weight: bold;
-        color: #f5e7c8;
-    }
-    .menu-item-description {
-        font-size: 0.9rem;
-        color: #d4c3a2;
-    }
-    .menu-item-footer {
-        background-color: rgba(0, 0, 0, 0.2);
-        border-top: 1px solid #a04b25;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .menu-item-price {
-        font-weight: bold;
-        font-size: 1.1rem;
-    }
-</style>

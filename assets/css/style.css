@@ -83,3 +83,80 @@ body {
     transform: translateY(-5px);
     box-shadow: 0 0.5rem 1rem rgba(234, 218, 176, 0.3);
 }
+
+.menu-item-card.explore-item-card {
+    background: rgba(255,255,255,0.08); /* lighter than #003e43 */
+    border: none;
+    color: #eadab0;
+    transition: box-shadow 0.2s;
+}
+.menu-item-card.explore-item-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(234,218,176,0.13);
+}
+.menu-item-name {
+    font-family: "Fredoka", sans-serif;
+    font-weight: bold;
+    color: #f5e7c8;
+}
+.menu-item-description {
+    font-size: 0.9rem;
+    color: #d4c3a2;
+}
+.menu-item-footer {
+    background-color: rgba(0, 0, 0, 0.08);
+    border-top: 1px solid #a04b25;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+.menu-item-price {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #eadab0;
+    margin-right: 1rem;
+}
+.quantity-widget {
+    display: flex;
+    align-items: center;
+    background: none;
+    border-radius: 6px;
+    padding: 0;
+    min-width: 90px;
+    justify-content: flex-end;
+    font-family: "Fredoka",sans-serif;
+}
+.quantity-widget .qty-btn {
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 1.1rem;
+    color: #eadab0;
+    border: none;
+    background: rgba(224,231,239,0.15);
+    border-radius: 50%;
+    box-shadow: none;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    opacity: 1;
+    cursor: pointer;
+}
+.quantity-widget .qty-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.quantity-widget .qty-value {
+    font-size: 1.1rem;
+    color: #eadab0;
+    min-width: 24px;
+    text-align: center;
+    user-select: none;
+    background: none;
+    padding: 0 2px;
+}
