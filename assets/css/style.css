@@ -172,7 +172,9 @@ body {
     font-size: 0.7em; /* Smaller font size for the badge */
     padding: 0.3em 0.5em; /* Adjust padding */
     line-height: 1;
-    /* Position adjustments might be needed based on font/layout */
-    top: 5px; /* Adjust vertical position */
-    left: 95%; /* Adjust horizontal position */
+    background-color: #a04b25; /* Use accent color for background */
+    color: #eadab0; /* Use main text color for badge text */
+    pointer-events: none; /* Clicks pass through to the link */
+    /* Optional: Fine-tune Bootstrap's vertical positioning if needed */
+    /* transform: translate(-50%, -3px); */ /* Example: Adjust vertical offset */
 }
