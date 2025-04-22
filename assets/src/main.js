@@ -2,6 +2,85 @@ document.addEventListener("DOMContentLoaded", () => {
     const contentDiv = document.getElementById("content");
     const navbarDiv = document.getElementById("navbar");
 
+    // --- Cart State & Logic ---
+    window.cartItems = {}; // Global cart state
+
+    // Utility to update quantity widgets based on cartItems
+    window.updateMenuQuantities = function() {
+        // Update quantities for items in the cart
+        for (const [itemId, cartItem] of Object.entries(window.cartItems)) {
+            const qtySpanId = itemId + '-qty';
+            const qtySpan = contentDiv.querySelector(`#${CSS.escape(qtySpanId)}`);
+            if (qtySpan) {
+                qtySpan.textContent = cartItem.quantity;
+                const widget = qtySpan.closest('.quantity-widget');
+                if (widget) {
+                    const decBtn = widget.querySelector('[data-action="decrement"]');
+                    if (decBtn) decBtn.disabled = cartItem.quantity <= 0;
+                }
+            }
+        }
+        // Reset quantities for items NOT in the cart (or ensure they are 0)
+        contentDiv.querySelectorAll('.quantity-widget').forEach(widget => {
+            const itemId = widget.getAttribute('data-item');
+            if (!window.cartItems[itemId] || window.cartItems[itemId].quantity === 0) {
+                const qtySpanId = itemId + '-qty';
+                const qtySpan = widget.querySelector(`#${CSS.escape(qtySpanId)}`);
+                if (qtySpan && qtySpan.textContent !== '0') {
+                     qtySpan.textContent = 0;
+                }
+                const decBtn = widget.querySelector('[data-action="decrement"]');
+                if (decBtn && !decBtn.disabled) {
+                    decBtn.disabled = true;
+                }
+            }
+        });
+    };
+
+    // Function to attach listeners to quantity widgets within #content
+    function attachQuantityWidgetListeners() {
+        const widgets = contentDiv.querySelectorAll('.quantity-widget');
+
+        widgets.forEach(widget => {
+            // Check if listeners are already attached to prevent duplicates
+            if (widget.dataset.listenersAttached === 'true') {
+                return;
+            }
+            widget.dataset.listenersAttached = 'true'; // Mark as attached
+
+            const itemId = widget.getAttribute('data-item');
+            const itemName = widget.getAttribute('data-name');
+            const itemPrice = parseFloat(widget.getAttribute('data-price'));
+            const incBtn = widget.querySelector('[data-action="increment"]');
+            const decBtn = widget.querySelector('[data-action="decrement"]');
+
+            if (!incBtn || !decBtn) {
+                console.error(`Could not find increment/decrement buttons for item ${itemId}`);
+                return;
+            }
+
+            incBtn.addEventListener('click', function() {
+                if (!window.cartItems[itemId]) {
+                    window.cartItems[itemId] = { quantity: 1, name: itemName, price: itemPrice };
+                } else {
+                    window.cartItems[itemId].quantity += 1;
+                }
+                window.updateMenuQuantities(); // Update UI immediately
+            });
+
+            decBtn.addEventListener('click', function() {
+                if (window.cartItems[itemId] && window.cartItems[itemId].quantity > 0) {
+                    window.cartItems[itemId].quantity -= 1;
+                    if (window.cartItems[itemId].quantity === 0) {
+                        delete window.cartItems[itemId];
+                    }
+                    window.updateMenuQuantities(); // Update UI immediately
+                }
+            });
+        });
+    }
+    // --- End Cart State & Logic ---
+
     // Helper function to slugify text for IDs
     function slugify(text) {
         if (!text) return '';
@@ -35,7 +114,18 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then((html) => {
                 contentDiv.innerHTML = html;
-                setActiveNavLink(page); // Update active link after content loads
+                setActiveNavLink(page); // Update active link
+
+                // --- Cart Related Updates After Load ---
+                window.updateMenuQuantities(); // Update quantities based on current cart state
+                attachQuantityWidgetListeners(); // Re-attach listeners to newly loaded widgets
+                // --- End Cart Related Updates ---
+
+                // Specific actions for cart page
+                if (page === 'cart' && typeof renderCart === 'function') {
+                    renderCart(); // Call renderCart if it exists (defined in cart.php)
+                }
+
                 // Scroll to anchor if provided
                 if (anchorTarget) {
                     // Use setTimeout to ensure the element exists in the DOM after render before scrolling
@@ -43,15 +133,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         const element = document.getElementById(anchorTarget);
                         if (element) {
                             element.scrollIntoView({ behavior: "smooth", block: "start" });
-                        } else {
-                            console.warn(`Anchor target #${anchorTarget} not found.`); // Keep warning for debugging
                         }
-                    }, 150);
+                    }, 150); // Increased timeout slightly just in case
                 }
             })
             .catch((error) => {
                 contentDiv.innerHTML = "<p>Error loading content.</p>";
-                console.error("Error loading page:", error); // Keep error logging
+                console.error("Error loading page:", error);
             });
     };
 
@@ -73,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadContent("home");
         })
         .catch((error) => {
-            console.error("Error loading navbar:", error); // Keep error logging
+            console.error("Error loading navbar:", error);
             loadContent("home"); // Attempt to load home anyway
         });
 
