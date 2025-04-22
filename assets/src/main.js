@@ -2,15 +2,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const contentDiv = document.getElementById("content");
     const navbarDiv = document.getElementById("navbar");
 
-    // --- Cart State & Logic ---
-    window.cartItems = {}; // Global cart state
+    window.cartItems = {}; 
 
-    // Function to update the cart badge in the navbar
     window.updateCartBadge = function() {
         const badge = document.getElementById('cart-count-badge');
-        if (!badge) return; // Exit if badge element doesn't exist yet
+        if (!badge) return; 
 
-        // Calculate total quantity of all items
         let totalQuantity = 0;
         for (const itemId in window.cartItems) {
             totalQuantity += window.cartItems[itemId].quantity;
@@ -18,16 +15,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (totalQuantity > 0) {
             badge.textContent = totalQuantity;
-            badge.style.display = 'inline-block'; // Show badge
+            badge.style.display = 'inline-block'; 
         } else {
             badge.textContent = '0';
-            badge.style.display = 'none'; // Hide badge
+            badge.style.display = 'none'; 
         }
     };
 
-    // Utility to update quantity widgets based on cartItems
     window.updateMenuQuantities = function() {
-        // Update quantities for items in the cart
         for (const [itemId, cartItem] of Object.entries(window.cartItems)) {
             const qtySpanId = itemId + '-qty';
             const qtySpan = contentDiv.querySelector(`#${CSS.escape(qtySpanId)}`);
@@ -37,16 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (widget) {
                     const decBtn = widget.querySelector('[data-action="decrement"]');
                     if (decBtn) decBtn.disabled = cartItem.quantity <= 0;
-                    // Add class to parent card if quantity > 0
                     const card = widget.closest('.menu-item-card');
                     if (card) card.classList.add('item-in-cart');
                 }
             }
         }
-        // Reset quantities for items NOT in the cart (or ensure they are 0)
         contentDiv.querySelectorAll('.quantity-widget').forEach(widget => {
             const itemId = widget.getAttribute('data-item');
-            const card = widget.closest('.menu-item-card'); // Find parent card
+            const card = widget.closest('.menu-item-card'); 
 
             if (!window.cartItems[itemId] || window.cartItems[itemId].quantity === 0) {
                 const qtySpanId = itemId + '-qty';
@@ -58,26 +51,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (decBtn && !decBtn.disabled) {
                     decBtn.disabled = true;
                 }
-                // Remove class from parent card if quantity is 0 or item not in cart
                 if (card) card.classList.remove('item-in-cart');
             } else {
-                 // Ensure class is present if item IS in cart (handles edge cases)
                  if (card) card.classList.add('item-in-cart');
             }
         });
-        window.updateCartBadge(); // Update the badge whenever quantities change
+        window.updateCartBadge(); 
     };
 
-    // Function to attach listeners to quantity widgets within #content
     function attachQuantityWidgetListeners() {
         const widgets = contentDiv.querySelectorAll('.quantity-widget');
 
         widgets.forEach(widget => {
-            // Check if listeners are already attached to prevent duplicates
             if (widget.dataset.listenersAttached === 'true') {
                 return;
             }
-            widget.dataset.listenersAttached = 'true'; // Mark as attached
+            widget.dataset.listenersAttached = 'true'; 
 
             const itemId = widget.getAttribute('data-item');
             const itemName = widget.getAttribute('data-name');
@@ -96,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     window.cartItems[itemId].quantity += 1;
                 }
-                window.updateMenuQuantities(); // Update UI immediately
+                window.updateMenuQuantities(); 
             });
 
             decBtn.addEventListener('click', function() {
@@ -105,18 +94,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (window.cartItems[itemId].quantity === 0) {
                         delete window.cartItems[itemId];
                     }
-                    window.updateMenuQuantities(); // Update UI immediately
+                    window.updateMenuQuantities(); 
                 }
             });
         });
     }
-    // --- End Cart State & Logic ---
 
-    // --- Go to Top Logic ---
-    const scrollThreshold = 200; // How many pixels down before showing the button
-    let goToTopBtn = null; // Reference to the Go to Top button
+    const scrollThreshold = 200; 
+    let goToTopBtn = null; 
 
-    // Function to scroll smoothly to the top
     function scrollToTop() {
         window.scrollTo({
             top: 0,
@@ -124,47 +110,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Function to show/hide the Go to Top button using class toggle
     function handleScrollForGoToTop() {
         if (!goToTopBtn) {
-            // Try to find the button if it wasn't found initially (e.g., after dynamic load)
             goToTopBtn = document.getElementById('goToTopBtn');
-            if (!goToTopBtn) return; // Exit if still not found
+            if (!goToTopBtn) return; 
         }
         if (window.scrollY > scrollThreshold) {
-            goToTopBtn.classList.add('show'); // Add class
+            goToTopBtn.classList.add('show'); 
         } else {
-            goToTopBtn.classList.remove('show'); // Remove class
+            goToTopBtn.classList.remove('show'); 
         }
     }
 
-    // Function to add scroll listener
     function addScrollListener() {
         window.addEventListener('scroll', handleScrollForGoToTop);
     }
 
-    // Function to remove scroll listener
     function removeScrollListener() {
         window.removeEventListener('scroll', handleScrollForGoToTop);
-        // Ensure button is hidden (by removing class) when leaving the menu page
         if (goToTopBtn) {
-            goToTopBtn.classList.remove('show'); // Remove class
+            goToTopBtn.classList.remove('show'); 
         }
     }
-    // --- End Go to Top Logic ---
 
-    // Helper function to slugify text for IDs
     function slugify(text) {
         if (!text) return '';
         return text.toString().toLowerCase()
-            .replace(/\s+/g, '-')           // Replace spaces with -
-            .replace(/[^\w-]+/g, '')       // Remove all non-word chars except hyphen
-            .replace(/--+/g, '-')         // Replace multiple - with single -
-            .replace(/^-+/, '')             // Trim - from start of text
-            .replace(/-+$/, '');            // Trim - from end of text
+            .replace(/\s+/g, '-')           
+            .replace(/[^\w-]+/g, '')       
+            .replace(/--+/g, '-')         
+            .replace(/^-+/, '')             
+            .replace(/-+$/, '');            
     }
 
-    // Function to set the active nav link
     const setActiveNavLink = (page) => {
         document.querySelectorAll("#navbar .nav-link").forEach((navLink) => {
             navLink.classList.remove("active");
@@ -175,13 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Load content dynamically
     const loadContent = (page, anchorTarget = null) => {
-        // --- Go to Top Listener Management ---
-        // Remove listener before loading new content, regardless of the current page
         removeScrollListener();
-        goToTopBtn = null; // Reset button reference
-        // --- End Go to Top Listener Management ---
+        goToTopBtn = null; 
 
         fetch(`views/${page}.php`)
             .then((response) => {
@@ -192,42 +166,34 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then((html) => {
                 contentDiv.innerHTML = html;
-                setActiveNavLink(page); // Update active link
+                setActiveNavLink(page); 
 
-                // --- Cart Related Updates After Load ---
-                window.updateMenuQuantities(); // Update quantities based on current cart state
-                attachQuantityWidgetListeners(); // Re-attach listeners to newly loaded widgets
-                window.updateCartBadge(); // Ensure badge is correct after loading content
-                // --- End Cart Related Updates ---
+                window.updateMenuQuantities(); 
+                attachQuantityWidgetListeners(); 
+                window.updateCartBadge(); 
 
-                // --- Go to Top Initialization ---
-                // Use setTimeout to ensure the button exists in the DOM before attaching listeners
                 setTimeout(() => {
                     if (page === 'menu') {
-                        goToTopBtn = document.getElementById('goToTopBtn'); // Find the button in the new content
+                        goToTopBtn = document.getElementById('goToTopBtn'); 
                         if (goToTopBtn) {
-                            addScrollListener(); // Add scroll listener specifically for the menu page
+                            addScrollListener(); 
                         } else {
-                            console.log("Go to Top button not found after loading menu."); // Debugging log
+                            console.log("Go to Top button not found after loading menu."); 
                         }
                     }
-                }, 50); // Small delay (50ms)
-                // --- End Go to Top Initialization ---
+                }, 50); 
 
-                // Specific actions for cart page
                 if (page === 'cart' && typeof renderCart === 'function') {
-                    renderCart(); // Call renderCart if it exists (defined in cart.php)
+                    renderCart(); 
                 }
 
-                // Scroll to anchor if provided
                 if (anchorTarget) {
-                    // Use setTimeout to ensure the element exists in the DOM after render before scrolling
                     setTimeout(() => {
                         const element = document.getElementById(anchorTarget);
                         if (element) {
                             element.scrollIntoView({ behavior: "smooth", block: "start" });
                         }
-                    }, 150); // Increased timeout slightly just in case
+                    }, 150); 
                 }
             })
             .catch((error) => {
@@ -236,12 +202,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     };
 
-    // Load navbar dynamically and then attach listeners
     fetch("partials/navbar.php")
         .then((response) => response.text())
         .then((html) => {
             navbarDiv.innerHTML = html;
-            // Navbar specific listener for direct nav-link clicks
             navbarDiv.addEventListener("click", (event) => {
                 const target = event.target;
                 if (target.tagName === "A" && target.classList.contains("nav-link") && target.hasAttribute("data-page")) {
@@ -250,38 +214,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     loadContent(page);
                 }
             });
-            // Load initial content after navbar is ready
             loadContent("home");
-            window.updateCartBadge(); // Initial badge update after navbar loads
+            window.updateCartBadge(); 
         })
         .catch((error) => {
             console.error("Error loading navbar:", error);
-            loadContent("home"); // Attempt to load home anyway
+            loadContent("home"); 
         });
 
-    // Delegated listener for clicks anywhere in the body
     document.body.addEventListener("click", (event) => {
-        // --- Go to Top Button Click ---
-        // Check for Go to Top button FIRST
         const topBtnTarget = event.target.closest('#goToTopBtn');
         if (topBtnTarget) {
-            event.preventDefault(); // Prevent any default button action
-            console.log("Go to Top button clicked"); // Add log for debugging
+            event.preventDefault(); 
+            console.log("Go to Top button clicked"); 
             scrollToTop();
-            return; // Explicitly stop processing here if it's the Go to Top button
+            return; 
         }
-        // --- End Go to Top Button Click ---
 
-        // --- Navigation Link Click (Handles content links like explore buttons, etc.) ---
         const navLinkTarget = event.target.closest('a[data-page]');
         if (navLinkTarget) {
-            // Check if the click originated inside the navbar AND was on a nav-link
             const isNavLinkClick = navbarDiv.contains(navLinkTarget) && navLinkTarget.classList.contains('nav-link');
 
-            // If it's a nav link inside the navbar, let the navbar's specific listener handle it.
-            // If it's NOT a nav link click (e.g., buttons in content), handle page loading here.
             if (!isNavLinkClick) {
-                event.preventDefault(); // Prevent default link behavior for content links
+                event.preventDefault(); 
 
                 const page = navLinkTarget.getAttribute("data-page");
                 const categoryTarget = navLinkTarget.getAttribute("data-category-target");
@@ -290,15 +245,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (page === 'menu' && categoryTarget) {
                     anchorId = `category-${slugify(categoryTarget)}`;
                 }
-                console.log(`Loading page from body listener: ${page}, Anchor: ${anchorId}`); // Add log for debugging
+                console.log(`Loading page from body listener: ${page}, Anchor: ${anchorId}`); 
                 loadContent(page, anchorId);
-                // No return needed here as this is the intended action for these links
             }
-            // Note: We don't need an else here because the navbar listener handles navbar clicks separately.
         }
-        // --- End Navigation Link Click ---
-
-        // Quantity widget clicks are handled by their own specific listeners attached in attachQuantityWidgetListeners()
 
     });
 });

@@ -1,22 +1,18 @@
 <div class="container">
     <h1>Cart</h1>
-    <!-- Add cart display logic here later -->
     <div id="cart-items-display">
-        <!-- Cart items will be rendered here by JavaScript -->
     </div>
     <div id="cart-summary">
-        <!-- Cart total will be shown here -->
     </div>
 </div>
 
 <script>
-// Function to render cart items (can be called when cart page loads)
 function renderCart() {
     const cartDisplay = document.getElementById('cart-items-display');
     const cartSummary = document.getElementById('cart-summary');
     if (!cartDisplay || !cartSummary) return;
 
-    cartDisplay.innerHTML = ''; // Clear previous items
+    cartDisplay.innerHTML = ''; 
     let total = 0;
 
     if (Object.keys(window.cartItems).length === 0) {
@@ -26,7 +22,7 @@ function renderCart() {
     }
 
     const table = document.createElement('table');
-    table.className = 'table'; // Add bootstrap table styling
+    table.className = 'table'; 
     table.innerHTML = `
         <thead>
             <tr>
@@ -59,9 +55,6 @@ function renderCart() {
     cartSummary.innerHTML = `<h4>Total: &#8377;${total.toFixed(2)}</h4>`;
 }
 
-// Render the cart when the cart view is loaded
 document.addEventListener('DOMContentLoaded', renderCart);
-// Also ensure renderCart is called if cartItems changes while on the cart page
-// (This might need more robust event handling later if items can be changed *from* the cart page)
 
 </script>

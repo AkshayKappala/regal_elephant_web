@@ -7,7 +7,6 @@ class Database {
         if (!$envLoaded && file_exists(__DIR__ . '/../.env')) {
             $lines = file(__DIR__ . '/../.env');
             foreach ($lines as $line) {
-                // Only set environment variables if they are not already set
                 [$key, $value] = explode('=', trim($line), 2);
                 if (!getenv($key)) {
                     putenv("$key=$value");
@@ -18,7 +17,7 @@ class Database {
     }
 
     public static function getConnection() {
-        self::loadEnv(); // Ensure .env is loaded
+        self::loadEnv(); 
 
         if (self::$instance === null) {
             error_log("Creating a new database connection.");

@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../config/database.php';
 $mysqli = Database::getConnection();
 
-// Define category groups (same as explore.php for consistent ordering)
 $categoryGroups = [
     "Starters" => ["Veg Starter", "Non-Veg Starter", "Veg Tandoori", "Non-Veg Tandoori"],
     "Main Course" => ["Veg Soup","Non-Veg Soup", "Veg Entree", "Non-Veg Entree", "Veg Noodles", "Non-Veg Noodles", "Veg Fried Rice", "Non-Veg Fried Rice", "Veg Biryani", "Non-Veg Biryani"],
@@ -182,8 +181,7 @@ function slugify($text) {
         <p class="text-center text-info">No menu items are currently available.</p>
     <?php endif; ?>
 
-    <!-- Go to Top Button -->
     <button id="goToTopBtn" title="Go to top" class="btn btn-custom btn-go-top">
-        &uarr; <!-- Up arrow character -->
+        &uarr; 
     </button>
 </div>
