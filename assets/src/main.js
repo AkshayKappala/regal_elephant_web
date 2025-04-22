@@ -18,11 +18,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (totalQuantity > 0) {
             badge.textContent = totalQuantity;
             badge.style.display = 'inline-block'; 
-            if (goToCartBtn) goToCartBtn.classList.add('show'); // Show Go to Cart button
+            if (goToCartBtn) {
+                goToCartBtn.textContent = `Go to Cart (${totalQuantity})`; // Update button text
+                goToCartBtn.classList.add('show'); // Show Go to Cart button
+            }
         } else {
             badge.textContent = '0';
             badge.style.display = 'none'; 
-            if (goToCartBtn) goToCartBtn.classList.remove('show'); // Hide Go to Cart button
+            if (goToCartBtn) {
+                goToCartBtn.textContent = 'Go to Cart'; // Reset button text
+                goToCartBtn.classList.remove('show'); // Hide Go to Cart button
+            }
         }
     };
 
