@@ -112,6 +112,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // --- End Cart State & Logic ---
 
+    // --- Go to Top Logic ---
+    const scrollThreshold = 200; // How many pixels down before showing the button
+    let goToTopBtn = null; // Reference to the Go to Top button
+
+    // Function to scroll smoothly to the top
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    // Function to show/hide the Go to Top button using class toggle
+    function handleScrollForGoToTop() {
+        if (!goToTopBtn) {
+            // Try to find the button if it wasn't found initially (e.g., after dynamic load)
+            goToTopBtn = document.getElementById('goToTopBtn');
+            if (!goToTopBtn) return; // Exit if still not found
+        }
+        if (window.scrollY > scrollThreshold) {
+            goToTopBtn.classList.add('show'); // Add class
+        } else {
+            goToTopBtn.classList.remove('show'); // Remove class
+        }
+    }
+
+    // Function to add scroll listener
+    function addScrollListener() {
+        window.addEventListener('scroll', handleScrollForGoToTop);
+    }
+
+    // Function to remove scroll listener
+    function removeScrollListener() {
+        window.removeEventListener('scroll', handleScrollForGoToTop);
+        // Ensure button is hidden (by removing class) when leaving the menu page
+        if (goToTopBtn) {
+            goToTopBtn.classList.remove('show'); // Remove class
+        }
+    }
+    // --- End Go to Top Logic ---
+
     // Helper function to slugify text for IDs
     function slugify(text) {
         if (!text) return '';
@@ -136,6 +177,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load content dynamically
     const loadContent = (page, anchorTarget = null) => {
+        // --- Go to Top Listener Management ---
+        // Remove listener before loading new content, regardless of the current page
+        removeScrollListener();
+        goToTopBtn = null; // Reset button reference
+        // --- End Go to Top Listener Management ---
+
         fetch(`views/${page}.php`)
             .then((response) => {
                 if (!response.ok) {
@@ -152,6 +199,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 attachQuantityWidgetListeners(); // Re-attach listeners to newly loaded widgets
                 window.updateCartBadge(); // Ensure badge is correct after loading content
                 // --- End Cart Related Updates ---
+
+                // --- Go to Top Initialization ---
+                // Use setTimeout to ensure the button exists in the DOM before attaching listeners
+                setTimeout(() => {
+                    if (page === 'menu') {
+                        goToTopBtn = document.getElementById('goToTopBtn'); // Find the button in the new content
+                        if (goToTopBtn) {
+                            addScrollListener(); // Add scroll listener specifically for the menu page
+                        } else {
+                            console.log("Go to Top button not found after loading menu."); // Debugging log
+                        }
+                    }
+                }, 50); // Small delay (50ms)
+                // --- End Go to Top Initialization ---
 
                 // Specific actions for cart page
                 if (page === 'cart' && typeof renderCart === 'function') {
@@ -200,26 +261,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Delegated listener for clicks anywhere in the body
     document.body.addEventListener("click", (event) => {
-        const target = event.target.closest('a[data-page]');
+        // --- Go to Top Button Click ---
+        // Check for Go to Top button FIRST
+        const topBtnTarget = event.target.closest('#goToTopBtn');
+        if (topBtnTarget) {
+            event.preventDefault(); // Prevent any default button action
+            console.log("Go to Top button clicked"); // Add log for debugging
+            scrollToTop();
+            return; // Explicitly stop processing here if it's the Go to Top button
+        }
+        // --- End Go to Top Button Click ---
 
-        if (target) {
+        // --- Navigation Link Click (Handles content links like explore buttons, etc.) ---
+        const navLinkTarget = event.target.closest('a[data-page]');
+        if (navLinkTarget) {
             // Check if the click originated inside the navbar AND was on a nav-link
-            const isNavLinkClick = navbarDiv.contains(target) && target.classList.contains('nav-link');
+            const isNavLinkClick = navbarDiv.contains(navLinkTarget) && navLinkTarget.classList.contains('nav-link');
 
+            // If it's a nav link inside the navbar, let the navbar's specific listener handle it.
+            // If it's NOT a nav link click (e.g., buttons in content), handle page loading here.
             if (!isNavLinkClick) {
-                // Handles clicks on buttons in explore, home page button, etc.
-                event.preventDefault();
+                event.preventDefault(); // Prevent default link behavior for content links
 
-                const page = target.getAttribute("data-page");
-                const categoryTarget = target.getAttribute("data-category-target");
+                const page = navLinkTarget.getAttribute("data-page");
+                const categoryTarget = navLinkTarget.getAttribute("data-category-target");
                 let anchorId = null;
 
                 if (page === 'menu' && categoryTarget) {
                     anchorId = `category-${slugify(categoryTarget)}`;
                 }
-
+                console.log(`Loading page from body listener: ${page}, Anchor: ${anchorId}`); // Add log for debugging
                 loadContent(page, anchorId);
+                // No return needed here as this is the intended action for these links
             }
+            // Note: We don't need an else here because the navbar listener handles navbar clicks separately.
         }
+        // --- End Navigation Link Click ---
+
+        // Quantity widget clicks are handled by their own specific listeners attached in attachQuantityWidgetListeners()
+
     });
 });

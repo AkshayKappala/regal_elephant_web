@@ -178,3 +178,36 @@ body {
     /* Optional: Fine-tune Bootstrap's vertical positioning if needed */
     /* transform: translate(-50%, -3px); */ /* Example: Adjust vertical offset */
 }
+
+/* Go to Top Button Styles */
+.btn-go-top {
+    /* display: none; */ /* Remove display none */
+    opacity: 0; /* Start hidden */
+    visibility: hidden; /* Use visibility for better accessibility */
+    position: fixed;
+    bottom: 20px;
+    right: -60px; /* Start off-screen to the right */
+    z-index: 99;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 15px; /* Smaller padding */
+    border-radius: 50%; /* Make it round */
+    font-size: 1.5rem; /* Larger arrow */
+    line-height: 1;
+    width: 50px; /* Fixed width */
+    height: 50px; /* Fixed height */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: right 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s; /* Add transitions */
+}
+
+.btn-go-top.show { /* Class to trigger the animation */
+    opacity: 1;
+    visibility: visible;
+    right: 30px; /* Move into view */
+}
+
+.btn-go-top:hover {
+    transform: translateY(-3px); /* Slightly less lift */
+    box-shadow: 0 6px 12px rgba(234, 218, 176, 0.4); /* Enhanced shadow on hover */
+}

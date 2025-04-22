@@ -182,4 +182,8 @@ function slugify($text) {
         <p class="text-center text-info">No menu items are currently available.</p>
     <?php endif; ?>
 
+    <!-- Go to Top Button -->
+    <button id="goToTopBtn" title="Go to top" class="btn btn-custom btn-go-top">
+        &uarr; <!-- Up arrow character -->
+    </button>
 </div>
