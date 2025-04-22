@@ -2,13 +2,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const contentDiv = document.getElementById("content");
     const navbarDiv = document.getElementById("navbar");
 
-    window.cartItems = {}; 
+    window.cartItems = {};
 
     window.updateCartBadge = function() {
         const badge = document.getElementById('cart-count-badge');
-        const goToCartBtn = document.getElementById('goToCartBtn'); // Get the Go to Cart button
+        const goToCartBtn = document.getElementById('goToCartBtn');
 
-        if (!badge) return; 
+        if (!badge) return;
 
         let totalQuantity = 0;
         for (const itemId in window.cartItems) {
@@ -17,17 +17,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (totalQuantity > 0) {
             badge.textContent = totalQuantity;
-            badge.style.display = 'inline-block'; 
+            badge.style.display = 'inline-block';
             if (goToCartBtn) {
-                goToCartBtn.textContent = `Go to Cart (${totalQuantity})`; // Update button text
-                goToCartBtn.classList.add('show'); // Show Go to Cart button
+                goToCartBtn.textContent = `Go to Cart (${totalQuantity})`;
+                goToCartBtn.classList.add('show');
             }
         } else {
             badge.textContent = '0';
-            badge.style.display = 'none'; 
+            badge.style.display = 'none';
             if (goToCartBtn) {
-                goToCartBtn.textContent = 'Go to Cart'; // Reset button text
-                goToCartBtn.classList.remove('show'); // Hide Go to Cart button
+                goToCartBtn.textContent = 'Go to Cart';
+                goToCartBtn.classList.remove('show');
             }
         }
     };
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         contentDiv.querySelectorAll('.quantity-widget').forEach(widget => {
             const itemId = widget.getAttribute('data-item');
-            const card = widget.closest('.menu-item-card'); 
+            const card = widget.closest('.menu-item-card');
 
             if (!window.cartItems[itemId] || window.cartItems[itemId].quantity === 0) {
                 const qtySpanId = itemId + '-qty';
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
                  if (card) card.classList.add('item-in-cart');
             }
         });
-        window.updateCartBadge(); 
+        window.updateCartBadge();
     };
 
     function attachQuantityWidgetListeners() {
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (widget.dataset.listenersAttached === 'true') {
                 return;
             }
-            widget.dataset.listenersAttached = 'true'; 
+            widget.dataset.listenersAttached = 'true';
 
             const itemId = widget.getAttribute('data-item');
             const itemName = widget.getAttribute('data-name');
@@ -95,8 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     window.cartItems[itemId].quantity += 1;
                 }
-                window.updateMenuQuantities(); 
-                window.updateCartBadge(); // Explicitly update badge/button on increment
+                window.updateMenuQuantities();
+                window.updateCartBadge();
             });
 
             decBtn.addEventListener('click', function() {
@@ -105,15 +105,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (window.cartItems[itemId].quantity === 0) {
                         delete window.cartItems[itemId];
                     }
-                    window.updateMenuQuantities(); 
-                    window.updateCartBadge(); // Explicitly update badge/button on decrement
+                    window.updateMenuQuantities();
+                    window.updateCartBadge();
                 }
             });
         });
     }
 
-    const scrollThreshold = 200; 
-    let goToTopBtn = null; 
+    const scrollThreshold = 200;
+    let goToTopBtn = null;
 
     function scrollToTop() {
         window.scrollTo({
@@ -125,12 +125,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function handleScrollForGoToTop() {
         if (!goToTopBtn) {
             goToTopBtn = document.getElementById('goToTopBtn');
-            if (!goToTopBtn) return; 
+            if (!goToTopBtn) return;
         }
         if (window.scrollY > scrollThreshold) {
-            goToTopBtn.classList.add('show'); 
+            goToTopBtn.classList.add('show');
         } else {
-            goToTopBtn.classList.remove('show'); 
+            goToTopBtn.classList.remove('show');
         }
     }
 
@@ -141,18 +141,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function removeScrollListener() {
         window.removeEventListener('scroll', handleScrollForGoToTop);
         if (goToTopBtn) {
-            goToTopBtn.classList.remove('show'); 
+            goToTopBtn.classList.remove('show');
         }
     }
 
     function slugify(text) {
         if (!text) return '';
         return text.toString().toLowerCase()
-            .replace(/\s+/g, '-')           
-            .replace(/[^\w-]+/g, '')       
-            .replace(/--+/g, '-')         
-            .replace(/^-+/, '')             
-            .replace(/-+$/, '');            
+            .replace(/\s+/g, '-')
+            .replace(/[^\w-]+/g, '')
+            .replace(/--+/g, '-')
+            .replace(/^-+/, '')
+            .replace(/-+$/, '');
     }
 
     const setActiveNavLink = (page) => {
@@ -167,9 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const loadContent = (page, anchorTarget = null) => {
         removeScrollListener();
-        goToTopBtn = null; 
-        const goToCartBtn = document.getElementById('goToCartBtn'); // Check cart button state on load
-        if (goToCartBtn) { // Hide cart button initially on page load, updateCartBadge will show if needed
+        goToTopBtn = null;
+        const goToCartBtn = document.getElementById('goToCartBtn');
+        if (goToCartBtn) {
              goToCartBtn.classList.remove('show');
         }
 
@@ -182,28 +182,34 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then((html) => {
                 contentDiv.innerHTML = html;
-                setActiveNavLink(page); 
+                setActiveNavLink(page);
 
-                window.updateMenuQuantities(); 
-                attachQuantityWidgetListeners(); 
-                window.updateCartBadge(); // Update badge and cart button visibility after loading content
+                if (page === 'cart') {
+                    setTimeout(() => {
+                        if (typeof window.renderCart === 'function') {
+                            console.log('Calling renderCart from main.js (setTimeout). Cart items:', JSON.stringify(window.cartItems));
+                            window.renderCart();
+                        } else {
+                            console.error('window.renderCart function not found! Check if cart.js is loaded.');
+                        }
+                    }, 0);
+                }
+
+                window.updateMenuQuantities();
+                attachQuantityWidgetListeners();
+                window.updateCartBadge();
 
                 setTimeout(() => {
                     if (page === 'menu') {
-                        goToTopBtn = document.getElementById('goToTopBtn'); 
+                        goToTopBtn = document.getElementById('goToTopBtn');
                         if (goToTopBtn) {
-                            addScrollListener(); 
+                            addScrollListener();
                         } else {
-                            console.log("Go to Top button not found after loading menu."); 
+                            console.log("Go to Top button not found after loading menu.");
                         }
                     }
-                    // Ensure cart button visibility is correct after potential delay
-                    window.updateCartBadge(); 
-                }, 50); 
-
-                if (page === 'cart' && typeof renderCart === 'function') {
-                    renderCart(); 
-                }
+                    window.updateCartBadge();
+                }, 50);
 
                 if (anchorTarget) {
                     setTimeout(() => {
@@ -211,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (element) {
                             element.scrollIntoView({ behavior: "smooth", block: "start" });
                         }
-                    }, 150); 
+                    }, 150);
                 }
             })
             .catch((error) => {
@@ -233,28 +239,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
             loadContent("home");
-            window.updateCartBadge(); 
+            window.updateCartBadge();
         })
         .catch((error) => {
             console.error("Error loading navbar:", error);
-            loadContent("home"); 
+            loadContent("home");
         });
 
     document.body.addEventListener("click", (event) => {
         const topBtnTarget = event.target.closest('#goToTopBtn');
-        const cartBtnTarget = event.target.closest('#goToCartBtn'); // Check for Go to Cart button click
+        const cartBtnTarget = event.target.closest('#goToCartBtn');
 
         if (topBtnTarget) {
-            event.preventDefault(); 
-            console.log("Go to Top button clicked"); 
+            event.preventDefault();
+            console.log("Go to Top button clicked");
             scrollToTop();
-            return; 
+            return;
         }
 
-        if (cartBtnTarget) { // Handle Go to Cart button click
+        if (cartBtnTarget) {
             event.preventDefault();
             console.log("Go to Cart button clicked");
-            loadContent('cart'); // Load the cart page
+            loadContent('cart');
             return;
         }
 
@@ -263,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const isNavLinkClick = navbarDiv.contains(navLinkTarget) && navLinkTarget.classList.contains('nav-link');
 
             if (!isNavLinkClick) {
-                event.preventDefault(); 
+                event.preventDefault();
 
                 const page = navLinkTarget.getAttribute("data-page");
                 const categoryTarget = navLinkTarget.getAttribute("data-category-target");
@@ -272,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (page === 'menu' && categoryTarget) {
                     anchorId = `category-${slugify(categoryTarget)}`;
                 }
-                console.log(`Loading page from body listener: ${page}, Anchor: ${anchorId}`); 
+                console.log(`Loading page from body listener: ${page}, Anchor: ${anchorId}`);
                 loadContent(page, anchorId);
             }
         }

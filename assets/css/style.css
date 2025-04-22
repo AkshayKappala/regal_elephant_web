@@ -85,10 +85,10 @@ body {
 }
 
 .menu-item-card.explore-item-card {
-    background: rgba(255,255,255,0.08); 
+    background: rgba(255,255,255,0.08);
     border: none;
     color: #eadab0;
-    transition: box-shadow 0.2s, background-color 0.3s ease; 
+    transition: box-shadow 0.2s, background-color 0.3s ease;
 }
 .menu-item-card.explore-item-card:hover {
     box-shadow: 0 0.5rem 1rem rgba(234,218,176,0.13);
@@ -168,58 +168,58 @@ body {
 }
 
 #cart-count-badge {
-    font-size: 0.7em; 
-    padding: 0.3em 0.5em; 
+    font-size: 0.7em;
+    padding: 0.3em 0.5em;
     line-height: 1;
-    background-color: #a04b25; 
-    color: #eadab0; 
-    pointer-events: none; 
+    background-color: #a04b25;
+    color: #eadab0;
+    pointer-events: none;
 }
 
 .btn-go-top {
-    opacity: 0; 
-    visibility: hidden; 
+    opacity: 0;
+    visibility: hidden;
     position: fixed;
     bottom: 20px;
-    right: -60px; 
+    right: -60px;
     z-index: 99;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 10px 15px; 
-    border-radius: 50%; 
-    font-size: 1.5rem; 
+    padding: 10px 15px;
+    border-radius: 50%;
+    font-size: 1.5rem;
     line-height: 1;
-    width: 50px; 
-    height: 50px; 
+    width: 50px;
+    height: 50px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: right 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s; 
+    transition: right 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s;
 }
 
-.btn-go-top.show { 
+.btn-go-top.show {
     opacity: 1;
     visibility: visible;
-    right: 30px; 
+    right: 30px;
 }
 
 .btn-go-top:hover {
-    transform: translateY(-3px); 
-    box-shadow: 0 6px 12px rgba(234, 218, 176, 0.4); 
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(234, 218, 176, 0.4);
 }
 
 .btn-go-cart {
     opacity: 0;
     visibility: hidden;
     position: fixed;
-    bottom: 90px; /* Increased bottom position */
-    right: -150px; /* Adjust initial off-screen position if needed */
+    bottom: 90px;
+    right: -150px;
     z-index: 98;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 12px 24px; /* Increased padding */
-    border-radius: 30px; /* Adjusted border-radius */
-    font-size: 1.2rem; /* Increased font size */
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 1.2rem;
     line-height: 1.3;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     transition: right 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s;
@@ -231,7 +231,7 @@ body {
 .btn-go-cart.show {
     opacity: 1;
     visibility: visible;
-    right: 30px; /* Slide in */
+    right: 30px;
     background-color: #eadab0;
     color: #a04b25;
 }
@@ -239,4 +239,52 @@ body {
 .btn-go-cart:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(234, 218, 176, 0.4);
+}
+
+.cart-items-table th,
+.cart-items-table td {
+    color: #eadab0;
+    vertical-align: middle;
+    background-color: transparent;
+}
+
+.cart-items-table thead th {
+    border-bottom: 2px solid #a04b25;
+}
+
+.cart-summary-table {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: 0;
+    border-top: 1px solid #a04b25;
+}
+
+.cart-summary-table td {
+    color: #eadab0;
+    border: none;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-color: transparent;
+}
+
+.cart-summary-table tr.fw-bold td {
+    font-size: 1.2rem;
+    border-top: 1px solid rgba(234, 218, 176, 0.3);
+}
+
+.text-end {
+    text-align: right;
+}
+
+#content h1:not(.title-home) {
+    color: #eadab0;
+    font-family: "Marko One", serif;
+    text-align: center;
+    margin-bottom: 2rem;
+
+}
+
+.cart-empty-message {
+    color: #d4c3a2;
+    font-size: 1.2rem;
 }
