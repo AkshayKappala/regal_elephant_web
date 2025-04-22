@@ -85,14 +85,20 @@ body {
 }
 
 .menu-item-card.explore-item-card {
-    background: rgba(255,255,255,0.08); /* lighter than #003e43 */
+    background: rgba(255,255,255,0.08); 
     border: none;
     color: #eadab0;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, background-color 0.3s ease; 
 }
 .menu-item-card.explore-item-card:hover {
     box-shadow: 0 0.5rem 1rem rgba(234,218,176,0.13);
 }
+
+.menu-item-card.item-in-cart {
+    background: #15686e;
+    box-shadow: 0 0 32px rgba(234, 218, 176, 0.5);
+}
+
 .menu-item-name {
     font-family: "Fredoka", sans-serif;
     font-weight: bold;
@@ -159,4 +165,14 @@ body {
     user-select: none;
     background: none;
     padding: 0 2px;
+}
+
+/* Cart Badge Styles */
+#cart-count-badge {
+    font-size: 0.7em; /* Smaller font size for the badge */
+    padding: 0.3em 0.5em; /* Adjust padding */
+    line-height: 1;
+    /* Position adjustments might be needed based on font/layout */
+    top: 5px; /* Adjust vertical position */
+    left: 95%; /* Adjust horizontal position */
 }

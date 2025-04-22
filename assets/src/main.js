@@ -5,6 +5,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Cart State & Logic ---
     window.cartItems = {}; // Global cart state
 
+    // Function to update the cart badge in the navbar
+    window.updateCartBadge = function() {
+        const badge = document.getElementById('cart-count-badge');
+        if (!badge) return; // Exit if badge element doesn't exist yet
+
+        // Calculate total quantity of all items
+        let totalQuantity = 0;
+        for (const itemId in window.cartItems) {
+            totalQuantity += window.cartItems[itemId].quantity;
+        }
+
+        if (totalQuantity > 0) {
+            badge.textContent = totalQuantity;
+            badge.style.display = 'inline-block'; // Show badge
+        } else {
+            badge.textContent = '0';
+            badge.style.display = 'none'; // Hide badge
+        }
+    };
+
     // Utility to update quantity widgets based on cartItems
     window.updateMenuQuantities = function() {
         // Update quantities for items in the cart
@@ -17,12 +37,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (widget) {
                     const decBtn = widget.querySelector('[data-action="decrement"]');
                     if (decBtn) decBtn.disabled = cartItem.quantity <= 0;
+                    // Add class to parent card if quantity > 0
+                    const card = widget.closest('.menu-item-card');
+                    if (card) card.classList.add('item-in-cart');
                 }
             }
         }
         // Reset quantities for items NOT in the cart (or ensure they are 0)
         contentDiv.querySelectorAll('.quantity-widget').forEach(widget => {
             const itemId = widget.getAttribute('data-item');
+            const card = widget.closest('.menu-item-card'); // Find parent card
+
             if (!window.cartItems[itemId] || window.cartItems[itemId].quantity === 0) {
                 const qtySpanId = itemId + '-qty';
                 const qtySpan = widget.querySelector(`#${CSS.escape(qtySpanId)}`);
@@ -33,8 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (decBtn && !decBtn.disabled) {
                     decBtn.disabled = true;
                 }
+                // Remove class from parent card if quantity is 0 or item not in cart
+                if (card) card.classList.remove('item-in-cart');
+            } else {
+                 // Ensure class is present if item IS in cart (handles edge cases)
+                 if (card) card.classList.add('item-in-cart');
             }
         });
+        window.updateCartBadge(); // Update the badge whenever quantities change
     };
 
     // Function to attach listeners to quantity widgets within #content
@@ -119,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // --- Cart Related Updates After Load ---
                 window.updateMenuQuantities(); // Update quantities based on current cart state
                 attachQuantityWidgetListeners(); // Re-attach listeners to newly loaded widgets
+                window.updateCartBadge(); // Ensure badge is correct after loading content
                 // --- End Cart Related Updates ---
 
                 // Specific actions for cart page
@@ -159,6 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             // Load initial content after navbar is ready
             loadContent("home");
+            window.updateCartBadge(); // Initial badge update after navbar loads
         })
         .catch((error) => {
             console.error("Error loading navbar:", error);

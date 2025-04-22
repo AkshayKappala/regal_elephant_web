@@ -9,7 +9,13 @@
                 <a class="nav-link active" aria-current="page" href="#" data-page="home">Home</a>
                 <a class="nav-link" href="#" data-page="explore">Explore</a>
                 <a class="nav-link" href="#" data-page="menu">Menu</a>
-                <a class="nav-link" href="#" data-page="cart">Cart</a>
+                <a class="nav-link position-relative" href="#" data-page="cart">
+                    Cart
+                    <span id="cart-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">
+                        0
+                        <span class="visually-hidden">items in cart</span>
+                    </span>
+                </a>
                 <a class="nav-link" href="#" data-page="orders">Orders</a>
             </div>
         </div>
