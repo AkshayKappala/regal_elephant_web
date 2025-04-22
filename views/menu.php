@@ -184,4 +184,7 @@ function slugify($text) {
     <button id="goToTopBtn" title="Go to top" class="btn btn-custom btn-go-top">
         &uarr; 
     </button>
+    <button id="goToCartBtn" title="Go to cart" class="btn btn-custom btn-go-cart">
+        Go to Cart
+    </button>
 </div>

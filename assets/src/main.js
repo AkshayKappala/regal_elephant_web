@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.updateCartBadge = function() {
         const badge = document.getElementById('cart-count-badge');
+        const goToCartBtn = document.getElementById('goToCartBtn'); // Get the Go to Cart button
+
         if (!badge) return; 
 
         let totalQuantity = 0;
@@ -16,9 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (totalQuantity > 0) {
             badge.textContent = totalQuantity;
             badge.style.display = 'inline-block'; 
+            if (goToCartBtn) goToCartBtn.classList.add('show'); // Show Go to Cart button
         } else {
             badge.textContent = '0';
             badge.style.display = 'none'; 
+            if (goToCartBtn) goToCartBtn.classList.remove('show'); // Hide Go to Cart button
         }
     };
 
@@ -86,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     window.cartItems[itemId].quantity += 1;
                 }
                 window.updateMenuQuantities(); 
+                window.updateCartBadge(); // Explicitly update badge/button on increment
             });
 
             decBtn.addEventListener('click', function() {
@@ -95,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         delete window.cartItems[itemId];
                     }
                     window.updateMenuQuantities(); 
+                    window.updateCartBadge(); // Explicitly update badge/button on decrement
                 }
             });
         });
@@ -156,6 +162,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const loadContent = (page, anchorTarget = null) => {
         removeScrollListener();
         goToTopBtn = null; 
+        const goToCartBtn = document.getElementById('goToCartBtn'); // Check cart button state on load
+        if (goToCartBtn) { // Hide cart button initially on page load, updateCartBadge will show if needed
+             goToCartBtn.classList.remove('show');
+        }
 
         fetch(`views/${page}.php`)
             .then((response) => {
@@ -170,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 window.updateMenuQuantities(); 
                 attachQuantityWidgetListeners(); 
-                window.updateCartBadge(); 
+                window.updateCartBadge(); // Update badge and cart button visibility after loading content
 
                 setTimeout(() => {
                     if (page === 'menu') {
@@ -181,6 +191,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             console.log("Go to Top button not found after loading menu."); 
                         }
                     }
+                    // Ensure cart button visibility is correct after potential delay
+                    window.updateCartBadge(); 
                 }, 50); 
 
                 if (page === 'cart' && typeof renderCart === 'function') {
@@ -224,11 +236,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.body.addEventListener("click", (event) => {
         const topBtnTarget = event.target.closest('#goToTopBtn');
+        const cartBtnTarget = event.target.closest('#goToCartBtn'); // Check for Go to Cart button click
+
         if (topBtnTarget) {
             event.preventDefault(); 
             console.log("Go to Top button clicked"); 
             scrollToTop();
             return; 
+        }
+
+        if (cartBtnTarget) { // Handle Go to Cart button click
+            event.preventDefault();
+            console.log("Go to Cart button clicked");
+            loadContent('cart'); // Load the cart page
+            return;
         }
 
         const navLinkTarget = event.target.closest('a[data-page]');
