@@ -246,18 +246,20 @@ body {
     color: #eadab0;
     vertical-align: middle;
     background-color: transparent;
+    border: none;
 }
 
 .cart-items-table thead th {
-    border-bottom: 2px solid #a04b25;
+    border-bottom: 2px solid #eadab0;
 }
 
 .cart-summary-table {
     max-width: 400px;
     margin-left: auto;
     margin-right: 0;
-    border-top: 1px solid #a04b25;
+    border-top: 2px solid #eadab0;
 }
+
 
 .cart-summary-table td {
     color: #eadab0;
@@ -269,7 +271,7 @@ body {
 
 .cart-summary-table tr.fw-bold td {
     font-size: 1.2rem;
-    border-top: 1px solid rgba(234, 218, 176, 0.3);
+    border: none;
 }
 
 .text-end {
