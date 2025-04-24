@@ -253,13 +253,23 @@ body {
     border-bottom: 2px solid #eadab0;
 }
 
+.cart-items-table th.text-end,
+.cart-items-table td.text-end,
+.cart-summary-table td.text-end {
+    text-align: right;
+}
+
+.cart-items-table th.text-center,
+.cart-items-table td.text-center {
+    text-align: center;
+}
+
 .cart-summary-table {
     max-width: 400px;
     margin-left: auto;
     margin-right: 0;
     border-top: 2px solid #eadab0;
 }
-
 
 .cart-summary-table td {
     color: #eadab0;
@@ -289,4 +299,44 @@ body {
 .cart-empty-message {
     color: #d4c3a2;
     font-size: 1.2rem;
+}
+
+/* Styles for Customer Details Form */
+#customer-details-section h3 {
+    color: #eadab0;
+    font-family: "Marko One", serif;
+    margin-bottom: 1.5rem; /* More space below heading */
+}
+
+#customer-details-form .form-label {
+    color: #d4c3a2; /* Lighter text for labels */
+    font-family: "Fredoka", sans-serif;
+}
+
+/* Make labels align nicely with inputs in horizontal form */
+#customer-details-form .col-form-label {
+    padding-top: calc(0.375rem + 1px); /* Vertically center label with input */
+    padding-bottom: calc(0.375rem + 1px);
+    line-height: 1.5;
+    text-align: right; /* Align label text to the right */
+}
+
+#customer-details-form .form-control {
+    background-color: transparent; /* Make background transparent */
+    border: 1px solid rgba(234, 218, 176, 0.3); /* Subtle border */
+    color: #eadab0; /* Input text color */
+    font-family: "Fredoka", sans-serif;
+}
+
+#customer-details-form .form-control:focus {
+    background-color: rgba(234, 218, 176, 0.1); /* Slightly less transparent on focus */
+    border-color: #eadab0;
+    color: #eadab0;
+    box-shadow: 0 0 0 0.25rem rgba(234, 218, 176, 0.25); /* Focus glow */
+}
+
+/* Style placeholder text */
+#customer-details-form .form-control::placeholder {
+    color: rgba(234, 218, 176, 0.5);
+    opacity: 1; /* Override bootstrap default */
 }
