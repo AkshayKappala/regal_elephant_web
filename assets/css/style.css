@@ -340,3 +340,74 @@ body {
     color: rgba(234, 218, 176, 0.5);
     opacity: 1; /* Override bootstrap default */
 }
+
+/* Order Confirmation Card Styles */
+.order-confirmation-card {
+    background: transparent; /* Make background transparent */
+    border: 1px solid rgba(234, 218, 176, 0.2); /* Add a subtle border for visibility */
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1); /* Keep or adjust shadow */
+}
+
+.order-card-header {
+    background-color: rgba(0, 0, 0, 0.15); /* Slightly darker header */
+    border-bottom: 1px solid #a04b25;
+    padding: 1rem 1.25rem;
+}
+
+.order-card-header .menu-item-name {
+    margin-bottom: 0.25rem; /* Space between title and order number */
+}
+
+.order-number-display {
+    font-size: 0.9rem;
+    color: #d4c3a2; /* Consistent muted text color */
+}
+
+/* Added style for timestamp */
+.order-time-display {
+    font-size: 0.8rem;
+    color: #b8a88a; /* Even more muted color */
+    margin-top: 0.2rem;
+}
+
+.order-card-body {
+    padding: 1.25rem;
+}
+
+.order-card-body p {
+    margin-bottom: 0.75rem; /* Consistent paragraph spacing */
+    color: #eadab0;
+}
+
+.order-card-body p strong {
+    color: #f5e7c8; /* Slightly brighter label */
+}
+
+.order-card-body h5 {
+    color: #f5e7c8;
+    font-family: "Fredoka", sans-serif;
+}
+
+/* Use cart-items-table styles defined earlier */
+.order-card-body .cart-items-table {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.order-total-display {
+    border-top: 1px solid rgba(234, 218, 176, 0.3);
+    padding-top: 1rem;
+    color: #eadab0;
+}
+
+.order-total-display .fw-bold {
+    color: #f5e7c8; /* Brighter total amount */
+}
+
+/* Status Badge */
+.badge.bg-warning {
+    background-color: #ffc107 !important; /* Ensure Bootstrap override */
+    color: #333 !important; /* Dark text for yellow background */
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.9em;
+}

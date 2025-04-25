@@ -184,7 +184,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 contentDiv.innerHTML = html;
                 setActiveNavLink(page);
 
+                // --- Start Modification ---
+                // Find and execute any script tags within the loaded content
+                const scripts = contentDiv.querySelectorAll('script');
+                scripts.forEach(script => {
+                    const newScript = document.createElement('script');
+                    // Copy attributes like src, type
+                    script.getAttributeNames().forEach(attr => newScript.setAttribute(attr, script.getAttribute(attr)));
+                    // Copy inline script content
+                    if (script.innerHTML) {
+                        newScript.appendChild(document.createTextNode(script.innerHTML));
+                    }
+                    // Replace the old script tag with the new one to ensure execution
+                    script.parentNode.replaceChild(newScript, script);
+                });
+                // --- End Modification ---
+
+                // Original logic (moved after script execution handling, though renderCart is specific)
                 if (page === 'cart') {
+                    // This specific call might need adjustment if cart.js relies on immediate execution
+                    // But renderCart is defined globally, so it should be fine if called after DOM update
                     setTimeout(() => {
                         if (typeof window.renderCart === 'function') {
                             console.log('Calling renderCart from main.js (setTimeout). Cart items:', JSON.stringify(window.cartItems));
@@ -208,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             console.log("Go to Top button not found after loading menu.");
                         }
                     }
-                    window.updateCartBadge();
+                    window.updateCartBadge(); // Ensure badge updates after potential cart clear on orders page
                 }, 50);
 
                 if (anchorTarget) {

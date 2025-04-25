@@ -134,33 +134,127 @@ window.renderCart = function() {
     // Add validation for form submission
     const customerForm = document.getElementById('customer-details-form');
     if (customerForm && !customerForm.dataset.submitListenerAttached) {
-        customerForm.addEventListener('submit', (event) => {
-            event.preventDefault(); // Prevent default form submission for now
-            // Basic validation example
+        customerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            console.log('Place Order button clicked, submit event triggered.'); // Log: Start
             const name = document.getElementById('customer-name').value;
             const mobile = document.getElementById('customer-mobile').value;
+            const email = document.getElementById('customer-email').value;
+            let tip = parseFloat(tipInput.value);
+            if (isNaN(tip) || tip < 0) tip = 0;
             if (!name || !mobile) {
-                 alert('Please enter your Name and Mobile Number.');
-                 return;
+                console.error('Validation failed: Name or Mobile missing.'); // Log: Validation fail
+                alert('Please enter your Name and Mobile Number.');
+                return;
             }
+            console.log('Form validation passed.'); // Log: Validation pass
+            const cartItemsArr = Object.entries(window.cartItems).map(([key, item]) => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+            }));
+            console.log('Cart items prepared for ID lookup:', cartItemsArr); // Log: Cart items
+            let itemIdData;
+            try {
+                const itemIdResp = await fetch('api/get_item_ids.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: cartItemsArr })
+                });
+                console.log('get_item_ids.php response status:', itemIdResp.status); // Log: Item ID response status
+                itemIdData = await itemIdResp.json();
+                console.log('get_item_ids.php response data:', itemIdData); // Log: Item ID response data
+            } catch (error) {
+                console.error('Error fetching item IDs:', error); // Log: Item ID fetch error
+                alert('Error looking up item details. Please try again.');
+                return;
+            }
+            if (!itemIdData.success) {
+                console.error('Item ID lookup failed:', itemIdData.error); // Log: Item ID lookup fail
+                alert('Could not process order: ' + (itemIdData.error || 'Item ID lookup failed.'));
+                return;
+            }
+            const cartItemsWithIds = itemIdData.items;
+            console.log('Cart items with IDs:', cartItemsWithIds); // Log: Cart items with IDs
+            let subtotal = 0;
+            cartItemsWithIds.forEach(item => { subtotal += item.price * item.quantity; });
+            const tax = subtotal * taxRate;
+            const total = subtotal + tax + tip;
+            const orderPayload = {
+                name,
+                mobile,
+                email,
+                tip,
+                cartItems: cartItemsWithIds
+            };
+            console.log('Placing order with payload:', orderPayload); // Log: Order payload
+            let data;
+            try {
+                const resp = await fetch('api/place_order.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderPayload)
+                });
+                console.log('place_order.php response status:', resp.status); // Log: Place order response status
+                data = await resp.json();
+                console.log('place_order.php response data:', data); // Log: Place order response data
+            } catch (error) {
+                console.error('Error placing order:', error); // Log: Place order fetch error
+                alert('Error submitting order. Please try again.');
+                return;
+            }
+            if (data.success) {
+                console.log('Order placed successfully! Order ID:', data.order_id, 'Order Number:', data.order_number); // Log: Success
 
-            alert('Order Placed! (Placeholder)');
-            window.cartItems = {};
-            // Call renderCart again (it's globally available via window)
-            if(typeof window.renderCart === 'function') {
-                window.renderCart();
+                // Clear cart data first
+                window.cartItems = {};
+                console.log('window.cartItems cleared:', JSON.stringify(window.cartItems)); // Log: Confirm clear
+
+                // Update UI elements related to cart
+                if(typeof window.renderCart === 'function') {
+                    console.log('Calling renderCart to clear UI...');
+                    window.renderCart(); // Rerender the cart view (should show empty)
+                }
+                if(typeof window.updateCartBadge === 'function') {
+                     console.log('Calling updateCartBadge...');
+                    window.updateCartBadge(); // Update navbar badge
+                }
+
+                // Reset form and tip
+                customerForm.reset();
+                tipInput.value = (0).toFixed(2);
+                // renderSummary might not be needed if renderCart handles the empty state correctly, but let's keep it for now
+                renderSummary();
+
+                // Store order details for the next page
+                // localStorage.setItem('last_order_id', data.order_id);
+                // localStorage.setItem('last_order_number', data.order_number); // Number might not be needed if fetched later
+
+                // --- Store order ID in a list --- 
+                let orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
+                if (!orderHistory.includes(data.order_id)) { // Avoid duplicates if user refreshes somehow
+                    orderHistory.push(data.order_id);
+                }
+                // Optional: Limit history size if needed
+                // const MAX_HISTORY = 10;
+                // if (orderHistory.length > MAX_HISTORY) {
+                //     orderHistory = orderHistory.slice(-MAX_HISTORY);
+                // }
+                localStorage.setItem('order_history', JSON.stringify(orderHistory));
+                // --- End storing order ID ---
+
+                // Redirect
+                console.log('Redirecting to orders page...'); // Log: Redirecting
+                if (typeof window.loadContent === 'function') {
+                    window.loadContent('orders');
+                } else {
+                    console.error('window.loadContent function not found, falling back to hash change.'); // Log: loadContent missing
+                    window.location.hash = '#orders';
+                }
+            } else {
+                console.error('Order placement failed:', data.error); // Log: Order placement fail
+                alert('Order failed: ' + (data.error || 'Unknown error.'));
             }
-            // Also update the badge via the global function from main.js
-            if(typeof window.updateCartBadge === 'function') {
-                window.updateCartBadge();
-            }
-            // Clear form fields
-            customerForm.reset();
-            // Reset tip to default calculation after clearing cart
-            const newSubtotal = 0; // Cart is empty now
-            // Calculate default tip based on 0 subtotal
-            tipInput.value = (newSubtotal * defaultTipRate).toFixed(2);
-            renderSummary(); // Update summary display
         });
         customerForm.dataset.submitListenerAttached = 'true';
     }

@@ -38,8 +38,8 @@
                     <div class="row mb-3 align-items-center">
                         <label for="customer-email" class="col-sm-3 col-form-label">Email</label>
                         <div class="col-sm-9">
-                            <!-- Added pattern for basic email validation -->
-                            <input type="email" class="form-control" id="customer-email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Please enter a valid email address">
+                            <!-- Removed pattern attribute -->
+                            <input type="email" class="form-control" id="customer-email" title="Please enter a valid email address">
                         </div>
                     </div>
                     <!-- Removed Tax Percentage Input Field -->
