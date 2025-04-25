@@ -1,0 +1,36 @@
+	CREATE TABLE `food_items` (
+ `item_id` int(11) NOT NULL AUTO_INCREMENT,
+ `name` varchar(100) NOT NULL,
+ `description` text DEFAULT NULL,
+ `is_vegetarian` tinyint(1) NOT NULL,
+ `price` decimal(10,0) NOT NULL,
+ `category` varchar(50) NOT NULL,
+ `img_url` varchar(255) DEFAULT NULL,
+ PRIMARY KEY (`item_id`),
+ UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=276 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
+orders	CREATE TABLE `orders` (
+ `order_id` int(11) NOT NULL AUTO_INCREMENT,
+ `order_number` varchar(20) NOT NULL,
+ `customer_name` varchar(100) NOT NULL,
+ `customer_phone` varchar(20) DEFAULT NULL,
+ `customer_email` varchar(100) DEFAULT NULL,
+ `status` enum('preparing','ready','picked up','cancelled') DEFAULT 'preparing',
+ `order_placed_time` datetime NOT NULL DEFAULT current_timestamp(),
+ `pickup_time` datetime DEFAULT NULL,
+ `order_total` decimal(10,2) NOT NULL,
+ PRIMARY KEY (`order_id`),
+ UNIQUE KEY `order_number` (`order_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+order_items	CREATE TABLE `order_items` (
+ `order_item_id` int(11) NOT NULL AUTO_INCREMENT,
+ `order_id` int(11) NOT NULL,
+ `item_id` int(11) NOT NULL,
+ `quantity` int(11) NOT NULL DEFAULT 1,
+ `item_price` decimal(10,2) NOT NULL,
+ PRIMARY KEY (`order_item_id`),
+ KEY `order_id` (`order_id`),
+ KEY `item_id` (`item_id`),
+ CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE,
+ CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `food_items` (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
