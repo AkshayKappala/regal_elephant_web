@@ -17,10 +17,9 @@ class Database {
     }
 
     public static function getConnection() {
-        self::loadEnv(); 
+        self::loadEnv();
 
         if (self::$instance === null) {
-            error_log("Creating a new database connection.");
             $host = getenv('DB_HOST');
             $user = getenv('DB_USER');
             $pass = getenv('DB_PASS');

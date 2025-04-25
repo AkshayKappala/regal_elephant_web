@@ -9,7 +9,6 @@ if (!$order_id) {
     exit;
 }
 
-// Fetch order details
 $stmt = $mysqli->prepare('SELECT * FROM orders WHERE order_id = ?');
 $stmt->bind_param('i', $order_id);
 $stmt->execute();
@@ -21,7 +20,6 @@ if (!$order) {
     exit;
 }
 
-// Fetch order items
 $stmt = $mysqli->prepare('SELECT oi.*, fi.name FROM order_items oi JOIN food_items fi ON oi.item_id = fi.item_id WHERE oi.order_id = ?');
 $stmt->bind_param('i', $order_id);
 $stmt->execute();

@@ -85,7 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const decBtn = widget.querySelector('[data-action="decrement"]');
 
             if (!incBtn || !decBtn) {
-                console.error(`Could not find increment/decrement buttons for item ${itemId}`);
                 return;
             }
 
@@ -184,32 +183,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 contentDiv.innerHTML = html;
                 setActiveNavLink(page);
 
-                // --- Start Modification ---
-                // Find and execute any script tags within the loaded content
                 const scripts = contentDiv.querySelectorAll('script');
                 scripts.forEach(script => {
                     const newScript = document.createElement('script');
-                    // Copy attributes like src, type
                     script.getAttributeNames().forEach(attr => newScript.setAttribute(attr, script.getAttribute(attr)));
-                    // Copy inline script content
                     if (script.innerHTML) {
                         newScript.appendChild(document.createTextNode(script.innerHTML));
                     }
-                    // Replace the old script tag with the new one to ensure execution
                     script.parentNode.replaceChild(newScript, script);
                 });
-                // --- End Modification ---
 
-                // Original logic (moved after script execution handling, though renderCart is specific)
                 if (page === 'cart') {
-                    // This specific call might need adjustment if cart.js relies on immediate execution
-                    // But renderCart is defined globally, so it should be fine if called after DOM update
                     setTimeout(() => {
                         if (typeof window.renderCart === 'function') {
-                            console.log('Calling renderCart from main.js (setTimeout). Cart items:', JSON.stringify(window.cartItems));
                             window.renderCart();
-                        } else {
-                            console.error('window.renderCart function not found! Check if cart.js is loaded.');
                         }
                     }, 0);
                 }
@@ -223,11 +210,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         goToTopBtn = document.getElementById('goToTopBtn');
                         if (goToTopBtn) {
                             addScrollListener();
-                        } else {
-                            console.log("Go to Top button not found after loading menu.");
                         }
                     }
-                    window.updateCartBadge(); // Ensure badge updates after potential cart clear on orders page
+                    window.updateCartBadge();
                 }, 50);
 
                 if (anchorTarget) {
@@ -241,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch((error) => {
                 contentDiv.innerHTML = "<p>Error loading content.</p>";
-                console.error("Error loading page:", error);
             });
     };
 
@@ -261,7 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
             window.updateCartBadge();
         })
         .catch((error) => {
-            console.error("Error loading navbar:", error);
             loadContent("home");
         });
 
@@ -271,14 +254,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (topBtnTarget) {
             event.preventDefault();
-            console.log("Go to Top button clicked");
             scrollToTop();
             return;
         }
 
         if (cartBtnTarget) {
             event.preventDefault();
-            console.log("Go to Cart button clicked");
             loadContent('cart');
             return;
         }
@@ -297,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (page === 'menu' && categoryTarget) {
                     anchorId = `category-${slugify(categoryTarget)}`;
                 }
-                console.log(`Loading page from body listener: ${page}, Anchor: ${anchorId}`);
                 loadContent(page, anchorId);
             }
         }

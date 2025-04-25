@@ -33,11 +33,9 @@ try {
         }
         $result->free();
     } else {
-        error_log("Error fetching menu items: " . $mysqli->error);
         echo "<p class='text-danger text-center'>Error loading menu items.</p>";
     }
 } catch (mysqli_sql_exception $e) {
-    error_log("Database error fetching menu items: " . $e->getMessage());
     echo "<p class='text-danger text-center'>Sorry, we couldn't load the menu at this time.</p>";
 }
 
@@ -92,8 +90,8 @@ function slugify($text) {
                                             </div>
                                             <div class="card-footer menu-item-footer d-flex justify-content-between align-items-center">
                                                 <span class="menu-item-price fw-bold">&#8377;<?php echo number_format($item['price'], 2); ?></span>
-                                                <div class="quantity-widget" data-item="<?php echo $itemId; ?>" 
-                                                     data-name="<?php echo htmlspecialchars($item['name'], ENT_QUOTES); ?>" 
+                                                <div class="quantity-widget" data-item="<?php echo $itemId; ?>"
+                                                     data-name="<?php echo htmlspecialchars($item['name'], ENT_QUOTES); ?>"
                                                      data-price="<?php echo htmlspecialchars($item['price'], ENT_QUOTES); ?>">
                                                     <button type="button" class="btn btn-sm qty-btn" data-action="decrement" disabled>-</button>
                                                     <span class="qty-value mx-2" id="<?php echo $itemId; ?>-qty">0</span>
@@ -158,8 +156,8 @@ function slugify($text) {
                                          </div>
                                          <div class="card-footer menu-item-footer d-flex justify-content-between align-items-center">
                                              <span class="menu-item-price fw-bold">&#8377;<?php echo number_format($item['price'], 2); ?></span>
-                                             <div class="quantity-widget" data-item="<?php echo $itemId; ?>" 
-                                                  data-name="<?php echo htmlspecialchars($item['name'], ENT_QUOTES); ?>" 
+                                             <div class="quantity-widget" data-item="<?php echo $itemId; ?>"
+                                                  data-name="<?php echo htmlspecialchars($item['name'], ENT_QUOTES); ?>"
                                                   data-price="<?php echo htmlspecialchars($item['price'], ENT_QUOTES); ?>">
                                                  <button type="button" class="btn btn-sm qty-btn" data-action="decrement" disabled>-</button>
                                                  <span class="qty-value mx-2" id="<?php echo $itemId; ?>-qty">0</span>
@@ -182,7 +180,7 @@ function slugify($text) {
     <?php endif; ?>
 
     <button id="goToTopBtn" title="Go to top" class="btn btn-custom btn-go-top">
-        &uarr; 
+        &uarr;
     </button>
     <button id="goToCartBtn" title="Go to cart" class="btn btn-custom btn-go-cart">
         Go to Cart

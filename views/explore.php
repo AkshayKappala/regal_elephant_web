@@ -29,11 +29,9 @@ if (!empty($flatCategoryList)) {
             }
             $stmt->close();
         } else {
-             error_log("Prepare statement failed: " . $mysqli->error);
              echo "<p class='text-danger text-center'>Error preparing database query.</p>";
         }
     } catch (mysqli_sql_exception $e) {
-        error_log("Error fetching categories: " . $e->getMessage());
         echo "<p class='text-danger text-center'>Sorry, we couldn't load the categories at this time.</p>";
     }
 } else {
