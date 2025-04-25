@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const loadContent = (page, anchorTarget = null) => {
+    window.loadContent = (page, anchorTarget = null) => {
         removeScrollListener();
         goToTopBtn = null;
         const goToCartBtn = document.getElementById('goToCartBtn');
