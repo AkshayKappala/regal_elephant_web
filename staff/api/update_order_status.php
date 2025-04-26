@@ -24,7 +24,7 @@ $orderId = intval($input['order_id']);
 $status = $input['status'];
 
 // Validate status value
-$validStatuses = ['preparing', 'ready', 'picked up', 'cancelled'];
+$validStatuses = ['preparing', 'ready', 'picked up', 'cancelled', 'archived'];
 if (!in_array($status, $validStatuses)) {
     echo json_encode(['success' => false, 'error' => 'Invalid status value']);
     exit;

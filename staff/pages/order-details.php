@@ -76,6 +76,7 @@ try {
                                     <option value="ready" <?php echo $order['status'] == 'ready' ? 'selected' : ''; ?>>Ready for Pickup</option>
                                     <option value="picked up" <?php echo $order['status'] == 'picked up' ? 'selected' : ''; ?>>Picked Up</option>
                                     <option value="cancelled" <?php echo $order['status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                    <option value="archived" <?php echo $order['status'] == 'archived' ? 'selected' : ''; ?>>Archived</option>
                                 </select>
                             </div>
                             <?php if($order['pickup_time']): ?>

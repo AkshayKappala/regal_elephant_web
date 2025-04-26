@@ -1,31 +1,39 @@
 <div class="container py-4">
     <h1 class="text-center mb-4">Your Orders</h1>
-    <div id="order-list-section" class="row justify-content-center g-4"></div>
+    
+    <ul class="nav nav-tabs mb-4" id="ordersTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-orders" type="button" role="tab" aria-controls="active-orders" aria-selected="true">Active Orders</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past-orders" type="button" role="tab" aria-controls="past-orders" aria-selected="false">Past Orders</button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="ordersTabContent">
+        <div class="tab-pane fade show active" id="active-orders" role="tabpanel" aria-labelledby="active-tab">
+            <div id="active-order-list" class="row justify-content-center g-4"></div>
+        </div>
+        <div class="tab-pane fade" id="past-orders" role="tabpanel" aria-labelledby="past-tab">
+            <div id="past-order-list" class="row justify-content-center g-4"></div>
+        </div>
+    </div>
 </div>
+
 <script>
 (async function() {
-    const orderListSection = document.getElementById('order-list-section');
+    const activeOrderList = document.getElementById('active-order-list');
+    const pastOrderList = document.getElementById('past-order-list');
     const orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
 
     if (!orderHistory || orderHistory.length === 0) {
-        orderListSection.innerHTML =
-            `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no orders yet.</p></div>`;
+        activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no orders yet.</p></div>`;
+        pastOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no past orders.</p></div>`;
         return;
     }
 
-    async function renderOrder(orderId) {
+    async function renderOrder(order, targetContainer) {
         try {
-            const response = await fetch(`api/get_order_details.php?order_id=${orderId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-
-            if (!data.success) {
-                return `<div class='col-md-8'><div class='alert alert-warning'>Could not load details for order ID ${orderId}.</div></div>`;
-            }
-
-            const order = data.order;
             let itemsHtml = '';
             order.items.forEach(item => {
                 itemsHtml += `<tr>
@@ -34,6 +42,21 @@
                                 <td class='text-end'>&#8377;${parseFloat(item.item_price).toFixed(2)}</td>
                               </tr>`;
             });
+
+            // Determine status badge color
+            let badgeClass = 'bg-warning text-dark';
+            let statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+            
+            if (order.status === 'ready') {
+                badgeClass = 'bg-success';
+            } else if (order.status === 'picked up') {
+                badgeClass = 'bg-secondary';
+            } else if (order.status === 'cancelled') {
+                badgeClass = 'bg-danger';
+            } else if (order.status === 'archived') {
+                badgeClass = 'bg-info';
+                statusText = 'Completed';
+            }
 
             return `
                 <div class='col-md-8'>
@@ -49,7 +72,7 @@
                                     <p><strong>Name:</strong> ${order.customer_name}</p>
                                     <p><strong>Phone:</strong> ${order.customer_phone}</p>
                                     <p><strong>Email:</strong> ${order.customer_email || '-'}</p>
-                                    <p><strong>Status:</strong> <span class="badge bg-warning text-dark">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge ${badgeClass}">${statusText}</span></p>
                                 </div>
                                 <div class="col-md-6">
                                     <h5 class="mb-2">Items Ordered:</h5>
@@ -66,15 +89,55 @@
                     </div>
                 </div>`;
         } catch (error) {
-            return `<div class='col-md-8'><div class='alert alert-danger'>Failed to load details for order ID ${orderId}.</div></div>`;
+            return `<div class='col-md-8'><div class='alert alert-danger'>Failed to load details for order.</div></div>`;
         }
     }
 
-    const reversedOrderHistory = orderHistory.slice().reverse();
-    const orderPromises = reversedOrderHistory.map(orderId => renderOrder(orderId));
-    const orderHtmlResults = await Promise.all(orderPromises);
-
-    orderListSection.innerHTML = orderHtmlResults.join('');
-
+    // Process all orders
+    const orderDetails = [];
+    
+    for (const orderId of orderHistory) {
+        try {
+            const response = await fetch(`api/get_order_details.php?order_id=${orderId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    orderDetails.push(data.order);
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching order ${orderId}:`, error);
+        }
+    }
+    
+    // Separate active from past orders
+    // IMPORTANT: Past orders include archived AND cancelled
+    const activeOrders = orderDetails.filter(order => 
+        order.status !== 'archived' && order.status !== 'cancelled' && order.status !== 'picked up'
+    );
+    
+    const pastOrders = orderDetails.filter(order => 
+        order.status === 'archived' || order.status === 'cancelled' || order.status === 'picked up'
+    );
+    
+    // Sort orders by placed time (newest first)
+    activeOrders.sort((a, b) => new Date(b.order_placed_time) - new Date(a.order_placed_time));
+    pastOrders.sort((a, b) => new Date(b.order_placed_time) - new Date(a.order_placed_time));
+    
+    // Render active orders
+    if (activeOrders.length === 0) {
+        activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no active orders.</p></div>`;
+    } else {
+        const activeOrdersHtml = await Promise.all(activeOrders.map(order => renderOrder(order, activeOrderList)));
+        activeOrderList.innerHTML = activeOrdersHtml.join('');
+    }
+    
+    // Render past orders
+    if (pastOrders.length === 0) {
+        pastOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no past orders.</p></div>`;
+    } else {
+        const pastOrdersHtml = await Promise.all(pastOrders.map(order => renderOrder(order, pastOrderList)));
+        pastOrderList.innerHTML = pastOrdersHtml.join('');
+    }
 })();
 </script>

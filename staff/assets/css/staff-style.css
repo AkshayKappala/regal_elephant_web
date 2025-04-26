@@ -108,6 +108,11 @@ main {
     color: #fff;
 }
 
+.badge-archived {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
 /* Stat Boxes */
 .stat-box {
     border-radius: 8px;

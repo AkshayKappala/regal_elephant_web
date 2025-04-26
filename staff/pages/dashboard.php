@@ -11,8 +11,8 @@ $stats = [
 ];
 
 try {
-    // Count orders by status
-    $query = "SELECT status, COUNT(*) as count FROM orders GROUP BY status";
+    // Count orders by status (excluding archived orders)
+    $query = "SELECT status, COUNT(*) as count FROM orders WHERE status != 'archived' GROUP BY status";
     $result = $mysqli->query($query);
     
     if ($result) {
@@ -23,10 +23,11 @@ try {
         }
     }
     
-    // Get recent orders for quick view
+    // Get recent orders for quick view (excluding archived orders)
     $recentOrdersQuery = "SELECT o.*, 
                         (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) as item_count 
                         FROM orders o 
+                        WHERE o.status != 'archived'
                         ORDER BY order_placed_time DESC LIMIT 5";
     $recentOrdersResult = $mysqli->query($recentOrdersQuery);
     

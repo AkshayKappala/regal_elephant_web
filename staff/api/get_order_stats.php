@@ -19,6 +19,8 @@ try {
         'ready' => 0,
         'picked_up' => 0,
         'cancelled' => 0,
+        'archived' => 0,
+        'total_active' => 0,
         'total' => 0
     ];
     
@@ -31,6 +33,11 @@ try {
             $status = str_replace(' ', '_', $row['status']);
             $stats[$status] = intval($row['count']);
             $stats['total'] += intval($row['count']);
+            
+            // Count active orders (non-archived)
+            if ($status !== 'archived') {
+                $stats['total_active'] += intval($row['count']);
+            }
         }
     }
     

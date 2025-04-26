@@ -6,6 +6,7 @@ $mysqli = Database::getConnection();
 $status = isset($_GET['status']) ? $_GET['status'] : '';
 $date = isset($_GET['date']) ? $_GET['date'] : '';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
+$showArchived = isset($_GET['show_archived']) ? filter_var($_GET['show_archived'], FILTER_VALIDATE_BOOLEAN) : false;
 
 // Build query conditions
 $conditions = [];
@@ -16,6 +17,9 @@ if ($status) {
     $conditions[] = "o.status = ?";
     $params[] = $status;
     $types .= 's';
+} else if (!$showArchived) {
+    // By default, don't show archived orders unless explicitly requested
+    $conditions[] = "o.status != 'archived'";
 }
 
 if ($date) {
@@ -70,25 +74,34 @@ try {
             <form method="get" action="" class="row g-3">
                 <input type="hidden" name="page" value="orders">
                 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="status-filter" class="form-label">Status</label>
                     <select class="form-select" id="status-filter" name="status">
-                        <option value="">All Statuses</option>
+                        <option value="">All Active Statuses</option>
                         <option value="preparing" <?php echo $status === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
                         <option value="ready" <?php echo $status === 'ready' ? 'selected' : ''; ?>>Ready</option>
                         <option value="picked up" <?php echo $status === 'picked up' ? 'selected' : ''; ?>>Picked Up</option>
                         <option value="cancelled" <?php echo $status === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                        <option value="archived" <?php echo $status === 'archived' ? 'selected' : ''; ?>>Archived</option>
                     </select>
                 </div>
                 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="date-filter" class="form-label">Date</label>
                     <input type="date" class="form-control" id="date-filter" name="date" value="<?php echo $date; ?>">
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="search-filter" class="form-label">Search</label>
                     <input type="text" class="form-control" id="search-filter" name="search" placeholder="Order #, Name, Phone" value="<?php echo htmlspecialchars($search); ?>">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="show-archived" class="form-label">Show Archived</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="show-archived" name="show_archived" value="1" <?php echo $showArchived ? 'checked' : ''; ?> onChange="this.form.submit()">
+                        <label class="form-check-label" for="show-archived">Include archived orders</label>
+                    </div>
                 </div>
                 
                 <div class="col-md-2 d-flex align-items-end">
@@ -122,7 +135,7 @@ try {
                             </thead>
                             <tbody>
                                 <?php while ($order = $result->fetch_assoc()): ?>
-                                    <tr>
+                                    <tr <?php echo $order['status'] === 'archived' ? 'class="table-secondary"' : ''; ?>>
                                         <td><?php echo htmlspecialchars($order['order_number']); ?></td>
                                         <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
                                         <td>
@@ -145,6 +158,7 @@ try {
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
                                                 
+                                                <?php if ($order['status'] !== 'archived'): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <span class="visually-hidden">Toggle Dropdown</span>
                                                 </button>
@@ -173,7 +187,16 @@ try {
                                                             </button>
                                                         </li>
                                                     <?php endif; ?>
+                                                    
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    
+                                                    <li>
+                                                        <button class="dropdown-item quick-status-change" data-order-id="<?php echo $order['order_id']; ?>" data-status="archived">
+                                                            <i class="bi bi-archive text-warning"></i> Archive Order
+                                                        </button>
+                                                    </li>
                                                 </ul>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
