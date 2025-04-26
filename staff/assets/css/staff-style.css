@@ -1,0 +1,194 @@
+/* Staff Portal Custom Styles */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Sidebar Styles */
+#sidebar {
+    background-color: #003e43 !important;
+    min-height: 100vh;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.staff-header {
+    padding-top: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.staff-header h2 {
+    color: #eadab0;
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.staff-header p {
+    color: #d4c3a2;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+#sidebar .nav-link {
+    color: #eadab0;
+    border-radius: 5px;
+    margin: 5px 10px;
+    padding: 10px 15px;
+    transition: all 0.3s;
+}
+
+#sidebar .nav-link:hover {
+    background-color: rgba(234, 218, 176, 0.1);
+    color: #ffffff;
+}
+
+#sidebar .nav-link.active {
+    background-color: #a04b25;
+    color: #fff;
+}
+
+/* Main Content Area */
+main {
+    padding: 20px;
+}
+
+.page-title {
+    color: #003e43;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 15px 20px;
+    font-weight: 600;
+}
+
+/* Button Styles */
+.btn-custom {
+    background-color: #a04b25;
+    color: #ffffff;
+    border: none;
+}
+
+.btn-custom:hover {
+    background-color: #8a3e1f;
+    color: #eadab0;
+}
+
+/* Status Badges */
+.badge-preparing {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-ready {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.badge-picked-up {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.badge-cancelled {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* Stat Boxes */
+.stat-box {
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.stat-box .stat-icon {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 2.5rem;
+    opacity: 0.2;
+}
+
+.stat-box .stat-number {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.stat-box .stat-label {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.stat-preparing {
+    border-left: 5px solid #ffc107;
+}
+
+.stat-ready {
+    border-left: 5px solid #28a745;
+}
+
+.stat-picked-up {
+    border-left: 5px solid #6c757d;
+}
+
+.stat-total {
+    border-left: 5px solid #17a2b8;
+}
+
+/* Orders Table */
+.orders-table th {
+    font-weight: 600;
+    border-top: none;
+}
+
+.orders-table .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Order Details Page */
+.order-details-header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.order-detail-section {
+    margin-bottom: 30px;
+}
+
+.order-items-table th,
+.order-items-table td {
+    vertical-align: middle;
+}
+
+.status-select {
+    max-width: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    #sidebar {
+        min-height: auto;
+    }
+}
