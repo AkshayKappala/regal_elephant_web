@@ -167,13 +167,17 @@ body {
     padding: 0 2px;
 }
 
-#cart-count-badge {
+#cart-count-badge, #orders-count-badge {
     font-size: 0.7em;
     padding: 0.3em 0.5em;
     line-height: 1;
     background-color: #a04b25;
     color: #eadab0;
     pointer-events: none;
+}
+
+#orders-count-badge {
+    background-color: #dc3545;
 }
 
 .btn-go-top {
@@ -410,4 +414,9 @@ body {
     color: #333 !important; /* Dark text for yellow background */
     font-family: "Fredoka", sans-serif;
     font-size: 0.9em;
+}
+
+.badge.bg-info {
+    background-color: #28a745 !important; /* Override to green color for completed orders */
+    color: #fff !important;
 }

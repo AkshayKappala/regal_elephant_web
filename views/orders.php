@@ -1,12 +1,20 @@
 <div class="container py-4">
     <h1 class="text-center mb-4">Your Orders</h1>
     
-    <ul class="nav nav-tabs mb-4" id="ordersTab" role="tablist">
+    <ul class="nav nav-tabs mb-4" id="ordersTab" role="tablist" style="border-bottom-color: #a04b25;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-orders" type="button" role="tab" aria-controls="active-orders" aria-selected="true">Active Orders</button>
+            <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-orders" 
+                    type="button" role="tab" aria-controls="active-orders" aria-selected="true"
+                    style="color: #eadab0; background-color: #a04b25; border-color: #a04b25;">
+                Active Orders
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past-orders" type="button" role="tab" aria-controls="past-orders" aria-selected="false">Past Orders</button>
+            <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past-orders" 
+                    type="button" role="tab" aria-controls="past-orders" aria-selected="false"
+                    style="color: #eadab0; border-color: #a04b25;">
+                Past Orders
+            </button>
         </li>
     </ul>
     
@@ -25,10 +33,26 @@
     const activeOrderList = document.getElementById('active-order-list');
     const pastOrderList = document.getElementById('past-order-list');
     const orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
+    let activeOrderCount = 0;
+
+    // Add event listener to style the tabs when clicked
+    document.querySelectorAll('#ordersTab .nav-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('#ordersTab .nav-link').forEach(t => {
+                if (t === this) {
+                    t.style.backgroundColor = '#a04b25';
+                    t.style.color = '#eadab0';
+                } else {
+                    t.style.backgroundColor = 'transparent';
+                    t.style.color = '#eadab0';
+                }
+            });
+        });
+    });
 
     if (!orderHistory || orderHistory.length === 0) {
-        activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no orders yet.</p></div>`;
-        pastOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no past orders.</p></div>`;
+        activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4 cart-empty-message'>You have no orders yet.</p></div>`;
+        pastOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4 cart-empty-message'>You have no past orders.</p></div>`;
         return;
     }
 
@@ -51,6 +75,7 @@
                 badgeClass = 'bg-success';
             } else if (order.status === 'picked up') {
                 badgeClass = 'bg-secondary';
+                statusText = 'Picked Up';
             } else if (order.status === 'cancelled') {
                 badgeClass = 'bg-danger';
             } else if (order.status === 'archived') {
@@ -111,7 +136,7 @@
     }
     
     // Separate active from past orders
-    // IMPORTANT: Past orders include archived AND cancelled
+    // IMPORTANT: Past orders include archived AND cancelled AND picked up
     const activeOrders = orderDetails.filter(order => 
         order.status !== 'archived' && order.status !== 'cancelled' && order.status !== 'picked up'
     );
@@ -124,9 +149,31 @@
     activeOrders.sort((a, b) => new Date(b.order_placed_time) - new Date(a.order_placed_time));
     pastOrders.sort((a, b) => new Date(b.order_placed_time) - new Date(a.order_placed_time));
     
+    // Update count of active orders
+    activeOrderCount = activeOrders.length;
+    
+    // Add count to the navbar orders link if there are active orders
+    if (activeOrderCount > 0) {
+        const ordersNavLink = document.querySelector('a.nav-link[data-page="orders"]');
+        if (ordersNavLink) {
+            // Create or update the badge for orders
+            let ordersBadge = document.getElementById('orders-count-badge');
+            if (!ordersBadge) {
+                ordersBadge = document.createElement('span');
+                ordersBadge.id = 'orders-count-badge';
+                ordersBadge.className = 'position-absolute top-0 start-50 translate-middle-x badge rounded-pill bg-danger';
+                ordersBadge.innerHTML = activeOrderCount + '<span class="visually-hidden">active orders</span>';
+                ordersNavLink.style.position = 'relative';
+                ordersNavLink.appendChild(ordersBadge);
+            } else {
+                ordersBadge.textContent = activeOrderCount;
+            }
+        }
+    }
+    
     // Render active orders
     if (activeOrders.length === 0) {
-        activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no active orders.</p></div>`;
+        activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4 cart-empty-message'>You have no active orders.</p></div>`;
     } else {
         const activeOrdersHtml = await Promise.all(activeOrders.map(order => renderOrder(order, activeOrderList)));
         activeOrderList.innerHTML = activeOrdersHtml.join('');
@@ -134,7 +181,7 @@
     
     // Render past orders
     if (pastOrders.length === 0) {
-        pastOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4' style='color: #d4c3a2;'>You have no past orders.</p></div>`;
+        pastOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4 cart-empty-message'>You have no past orders.</p></div>`;
     } else {
         const pastOrdersHtml = await Promise.all(pastOrders.map(order => renderOrder(order, pastOrderList)));
         pastOrderList.innerHTML = pastOrdersHtml.join('');

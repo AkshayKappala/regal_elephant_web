@@ -7,9 +7,22 @@ window.renderCart = function() {
     const customerDetailsHeadingRow = customerDetailsSection?.previousElementSibling;
     const tipInput = document.getElementById('tip-amount');
     const placeOrderContainer = document.getElementById('place-order-button-container');
+    
+    // Get customer form fields
+    const customerNameInput = document.getElementById('customer-name');
+    const customerMobileInput = document.getElementById('customer-mobile');
+    const customerEmailInput = document.getElementById('customer-email');
 
     if (!cartDisplay || !cartSummary || !customerDetailsSection || !tipInput || !placeOrderContainer) {
         return;
+    }
+
+    // Autofill customer details from localStorage if available
+    if (customerNameInput && customerMobileInput && customerEmailInput) {
+        const savedCustomerDetails = JSON.parse(localStorage.getItem('customer_details') || '{}');
+        if (savedCustomerDetails.name) customerNameInput.value = savedCustomerDetails.name;
+        if (savedCustomerDetails.mobile) customerMobileInput.value = savedCustomerDetails.mobile;
+        if (savedCustomerDetails.email) customerEmailInput.value = savedCustomerDetails.email;
     }
 
     cartDisplay.innerHTML = '';
@@ -137,6 +150,10 @@ window.renderCart = function() {
                 alert('Please enter your Name and Mobile Number.');
                 return;
             }
+            
+            // Save customer details to localStorage
+            localStorage.setItem('customer_details', JSON.stringify({ name, mobile, email }));
+            
             const cartItemsArr = Object.entries(window.cartItems).map(([key, item]) => ({
                 name: item.name,
                 price: item.price,
