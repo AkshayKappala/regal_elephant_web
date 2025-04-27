@@ -159,6 +159,9 @@ function loadAllOrders() {
                 
                 // Hide loader
                 if (ordersLoader) ordersLoader.style.display = 'none';
+                
+                // Log successful refresh
+                console.log(`Successfully refreshed orders at ${new Date().toLocaleTimeString()}`);
             } else {
                 throw new Error(data.error || 'Failed to load orders');
             }
@@ -312,45 +315,98 @@ function setupOrderEventListeners() {
         return;
     }
     
-    const evtSource = new EventSource('../api/order_events.php?client=staff');
+    console.log('Setting up SSE connection at', new Date().toLocaleTimeString());
+    // Add a timestamp and cache-busting parameter
+    const evtSource = new EventSource(`../api/order_events.php?client=staff&_nocache=${Date.now()}`);
     
     evtSource.addEventListener('connection', function(e) {
-        // Connection established
+        console.log('SSE connection established at', new Date().toLocaleTimeString());
     });
     
     evtSource.addEventListener('orders_update', function(e) {
-        const data = JSON.parse(e.data);
-        if (data.orders && data.orders.length > 0) {
-            // Update our local orders data
-            updateLocalOrdersData(data.orders);
-            
-            // Redraw the tables
-            updateOrdersTables();
+        console.log('Received orders_update event at', new Date().toLocaleTimeString());
+        try {
+            const data = JSON.parse(e.data);
+            if (data.orders && data.orders.length > 0) {
+                console.log('Orders update contains', data.orders.length, 'orders');
+                // Update our local orders data
+                updateLocalOrdersData(data.orders);
+                
+                // Redraw the tables
+                updateOrdersTables();
+            }
+        } catch (err) {
+            console.error('Error processing orders_update event:', err);
         }
     });
     
     evtSource.addEventListener('order_update', function(e) {
-        const data = JSON.parse(e.data);
-        if (data.order) {
-            // Update our local orders data
-            updateLocalOrdersData([data.order]);
-            
-            // Redraw the tables
-            updateOrdersTables();
+        console.log('Received order_update event at', new Date().toLocaleTimeString());
+        try {
+            const data = JSON.parse(e.data);
+            if (data.order) {
+                console.log('Order update received for order ID:', data.order.order_id, 'with status:', data.order.status);
+                // Update our local orders data
+                updateLocalOrdersData([data.order]);
+                
+                // Redraw the tables
+                updateOrdersTables();
+            }
+        } catch (err) {
+            console.error('Error processing order_update event:', err);
+        }
+    });
+    
+    // Add handler for new general events
+    evtSource.addEventListener('events_update', function(e) {
+        console.log('Received events_update event at', new Date().toLocaleTimeString());
+        try {
+            const data = JSON.parse(e.data);
+            if (data.events && data.events.length > 0) {
+                console.log('Received', data.events.length, 'events');
+                // Force a full refresh for any events update
+                loadAllOrders();
+            }
+        } catch (err) {
+            console.error('Error processing events_update event:', err);
+        }
+    });
+    
+    // Add a general message handler to catch all events
+    evtSource.addEventListener('message', function(e) {
+        console.log('Received generic message event at', new Date().toLocaleTimeString());
+        try {
+            // Try to parse the data to see what we got
+            const data = JSON.parse(e.data);
+            console.log('Generic message event data:', data);
+            // Refresh orders as a fallback
+            loadAllOrders();
+        } catch (err) {
+            console.error('Error processing generic message event:', err);
         }
     });
     
     evtSource.addEventListener('error', function(e) {
-        console.error('SSE connection error');
+        console.error('SSE connection error at', new Date().toLocaleTimeString(), e);
         
         // Try to reconnect after a delay
         setTimeout(function() {
+            console.log('Attempting to reconnect SSE at', new Date().toLocaleTimeString());
             setupOrderEventListeners();
         }, 5000);
     });
     
+    // Handle visibility changes - refresh when page becomes visible again
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            console.log('Page became visible, refreshing orders');
+            loadAllOrders();
+        }
+    });
+    
     // Clean up on page unload
     window.addEventListener('beforeunload', function() {
+        console.log('Closing SSE connection due to page unload');
         evtSource.close();
     });
 }

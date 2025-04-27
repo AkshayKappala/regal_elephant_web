@@ -27,7 +27,7 @@ export function initializeSSEConnection() {
             if (document.getElementById('dashboard-stats')) {
                 updateOrderStats(true);
             }
-        }, 30000);
+        }, 15000); // Reduced polling interval from 30s to 15s for more frequent updates
         return;
     }
     
@@ -46,8 +46,9 @@ export function initializeSSEConnection() {
             reconnectAttempts = 0; // Reset reconnect attempts
             
             // Refresh data on connection to ensure we have the latest
-            if (document.getElementById('orders-table')) {
+            if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
                 refreshOrdersTable();
+                console.log('Refreshing orders table on SSE connection');
             }
             
             if (document.getElementById('dashboard-stats')) {
@@ -64,46 +65,10 @@ export function initializeSSEConnection() {
                     updateOrderStats(true);
                 }
                 
-                const newOrders = data.orders.filter(order => order.status === 'preparing');
-                if (newOrders.length > 0) {
-                    const unprocessedOrders = newOrders.filter(order => {
-                        const orderUniqueId = `new_order_${order.order_id}`;
-                        if (processedOrders.has(orderUniqueId)) {
-                            return false;
-                        }
-                        
-                        processedOrders.add(orderUniqueId);
-                        saveProcessedOrders();
-                        return true;
-                    });
-                    
-                    if (unprocessedOrders.length > 0) {
-                        // Play notification sound for new orders
-                        playNotificationSound();
-                        
-                        if (document.querySelector('.orders-table')) {
-                            console.log('Updating dashboard with new orders:', unprocessedOrders);
-                            updateDashboardOrders(unprocessedOrders);
-                        }
-                        
-                        if (document.getElementById('orders-table')) {
-                            console.log('Updating orders table with new orders:', unprocessedOrders);
-                            updateOrdersTableWithNewOrders(unprocessedOrders);
-                        }
-                    }
-                }
-                
-                const otherOrders = data.orders.filter(order => order.status !== 'preparing');
-                if (otherOrders.length > 0) {
-                    if (document.querySelector('.orders-table')) {
-                        console.log('Updating dashboard with other orders:', otherOrders);
-                        updateDashboardOrders(otherOrders);
-                    }
-                    
-                    if (document.getElementById('orders-table')) {
-                        console.log('Updating orders table with other orders:', otherOrders);
-                        updateOrdersTableWithNewOrders(otherOrders);
-                    }
+                // Force refresh orders table for any orders update
+                if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
+                    console.log('Refreshing orders table due to orders_update event');
+                    refreshOrdersTable();
                 }
             }
         });
@@ -113,78 +78,53 @@ export function initializeSSEConnection() {
             const data = JSON.parse(event.data);
             
             if (data.events && data.events.length > 0) {
+                // Process all events sequentially
                 data.events.forEach(event => {
                     const eventUniqueId = `${event.event_type}_${event.event_id}`;
                     
                     if (processedEvents.has(eventUniqueId)) {
-                        return;
+                        return; // Skip already processed events
                     }
                     
                     processedEvents.add(eventUniqueId);
                     
+                    // Limit processed events cache size
                     if (processedEvents.size > 200) {
                         const eventsArray = Array.from(processedEvents);
                         processedEvents.clear();
                         eventsArray.slice(-100).forEach(id => processedEvents.add(id));
                     }
                     
-                    const eventData = JSON.parse(event.event_data);
-                    
-                    if (event.event_type === 'new_order') {
-                        // Play notification sound for new orders
-                        playNotificationSound();
+                    try {
+                        const eventData = JSON.parse(event.event_data);
                         
-                        if (document.getElementById('dashboard-stats')) {
-                            updateOrderStats(true);
-                        }
-                        
-                        if (document.querySelector('.orders-table')) {
-                            console.log('Updating dashboard due to new_order event');
-                            fetch('api/get_orders_list.php?limit=5&_nocache=' + Date.now())
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        refreshDashboardOrders(data.orders);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching dashboard orders:', error);
-                                });
-                        }
-                        
-                        if (document.getElementById('orders-table')) {
-                            console.log('Refreshing orders table due to new_order event');
-                            refreshOrdersTable();
+                        if (event.event_type === 'new_order') {
+                            // Play notification sound for new orders
+                            playNotificationSound();
                             
-                            const orderUniqueId = `new_order_${eventData.order_id}`;
-                            if (!processedOrders.has(orderUniqueId)) {
-                                processedOrders.add(orderUniqueId);
-                                saveProcessedOrders();
+                            if (document.getElementById('dashboard-stats')) {
+                                updateOrderStats(true);
+                            }
+                            
+                            // Force refresh the orders table for new orders
+                            if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
+                                console.log('Refreshing orders table due to new_order event');
+                                refreshOrdersTable();
                             }
                         }
-                    }
-                    
-                    if (event.event_type === 'status_change') {
-                        console.log('Handling status change event:', eventData);
-                        handleStatusChangeEvent(eventData);
                         
-                        // Force refresh the orders table and dashboard
-                        if (document.getElementById('orders-table')) {
-                            refreshOrdersTable();
+                        if (event.event_type === 'status_change') {
+                            console.log('Handling status change event:', eventData);
+                            handleStatusChangeEvent(eventData);
+                            
+                            // Force refresh the orders table for status changes
+                            if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
+                                console.log('Refreshing orders table due to status_change event');
+                                refreshOrdersTable();
+                            }
                         }
-                        
-                        if (document.querySelector('.orders-table')) {
-                            fetch('api/get_orders_list.php?limit=5&_nocache=' + Date.now())
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        refreshDashboardOrders(data.orders);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching dashboard orders:', error);
-                                });
-                        }
+                    } catch (err) {
+                        console.error('Error processing event:', err);
                     }
                 });
             }
@@ -192,37 +132,21 @@ export function initializeSSEConnection() {
         
         evtSource.addEventListener('order_update', function(event) {
             console.log('Received order_update event:', event.data);
-            const data = JSON.parse(event.data);
-            
-            if (data.order) {
-                // Always update the order stats if we're on the dashboard
-                if (document.getElementById('dashboard-stats')) {
-                    updateOrderStats(true);
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.order) {
+                    // Update the order in the orders table
+                    handleOrderUpdateEvent(data.order);
                     
-                    // Also update the dashboard orders table if it exists
-                    if (document.querySelector('.orders-table')) {
-                        // Refresh the dashboard with the latest orders
-                        fetch('api/get_orders_list.php?limit=5&_nocache=' + Date.now())
-                            .then(response => response.json())
-                            .then(result => {
-                                if (result.success) {
-                                    console.log('Refreshing dashboard orders with:', result.orders);
-                                    refreshDashboardOrders(result.orders);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error fetching updated dashboard orders:', error);
-                            });
+                    // Force refresh the orders table for any order update
+                    if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
+                        console.log('Refreshing orders table due to order_update event');
+                        refreshOrdersTable();
                     }
                 }
-                
-                // Update the order in the orders table
-                handleOrderUpdateEvent(data.order);
-                
-                // Force refresh the orders table for good measure
-                if (document.getElementById('orders-table')) {
-                    refreshOrdersTable();
-                }
+            } catch (err) {
+                console.error('Error processing order_update event:', err);
             }
         });
         
@@ -258,7 +182,7 @@ export function initializeSSEConnection() {
                     if (document.getElementById('dashboard-stats')) {
                         updateOrderStats(true);
                     }
-                }, 30000);
+                }, 15000); // Reduced polling interval for more frequent updates
             }
         };
         
@@ -291,7 +215,7 @@ export function initializeSSEConnection() {
             if (document.getElementById('dashboard-stats')) {
                 updateOrderStats(true);
             }
-        }, 30000);
+        }, 15000); // Reduced polling interval for more frequent updates
     }
 }
 

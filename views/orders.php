@@ -88,9 +88,9 @@ import { addOrderEventListener } from './assets/src/events.js';
     let orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
 
     // Active order statuses
-    const activeStatuses = ['preparing', 'ready', 'picked up'];
+    const activeStatuses = ['preparing', 'ready']; // Removed 'picked up' from active statuses
     // History statuses
-    const historyStatuses = ['archived', 'cancelled'];
+    const historyStatuses = ['archived', 'cancelled', 'picked up']; // Added 'picked up' to history statuses
 
     // Function to handle initial orders display
     function displayOrders() {
