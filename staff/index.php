@@ -98,6 +98,7 @@ if ($page === 'logout') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/staff.js"></script>
+    <!-- Load the main staff.js file as a module -->
+    <script type="module" src="assets/js/staff.js"></script>
 </body>
 </html>
