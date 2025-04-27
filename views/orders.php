@@ -1,22 +1,62 @@
 <div class="container py-4">
     <h1 class="text-center mb-4">Your Orders</h1>
-    <div id="order-list-section" class="row justify-content-center g-4"></div>
+    
+    <!-- Tabs for Active Orders and Order History -->
+    <ul class="nav nav-tabs mb-4 justify-content-center" id="orders-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="active-orders-tab" data-bs-toggle="tab" data-bs-target="#active-orders" type="button" role="tab" aria-controls="active-orders" aria-selected="true">Active Orders</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="order-history-tab" data-bs-toggle="tab" data-bs-target="#order-history" type="button" role="tab" aria-controls="order-history" aria-selected="false">Order History</button>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content" id="orders-tab-content">
+        <!-- Active Orders Tab -->
+        <div class="tab-pane fade show active" id="active-orders" role="tabpanel" aria-labelledby="active-orders-tab">
+            <div id="active-orders-section" class="row justify-content-center g-4">
+                <!-- Active orders will be loaded here -->
+                <div class='col-12'><div class='alert alert-info text-center'>Loading active orders...</div></div>
+            </div>
+        </div>
+        
+        <!-- Order History Tab -->
+        <div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
+            <div id="order-history-section" class="row justify-content-center g-4">
+                <!-- Order history will be loaded here -->
+                <div class='col-12'><div class='alert alert-info text-center'>Loading order history...</div></div>
+            </div>
+        </div>
+    </div>
 </div>
 <script>
 (async function() {
-    const orderListSection = document.getElementById('order-list-section');
+    const activeOrdersSection = document.getElementById('active-orders-section');
+    const orderHistorySection = document.getElementById('order-history-section');
     let orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
+
+    // Active order statuses
+    const activeStatuses = ['preparing', 'ready', 'picked up'];
+    // History statuses
+    const historyStatuses = ['archived', 'cancelled'];
 
     // Function to handle initial orders display
     function displayOrders() {
         if (!orderHistory || orderHistory.length === 0) {
-            orderListSection.innerHTML =
-                `<div class='col-12'><div class='alert alert-info text-center'>No orders placed in this session yet.</div></div>`;
+            activeOrdersSection.innerHTML =
+                `<div class='col-12'><div class='alert alert-info text-center'>No active orders.</div></div>`;
+            orderHistorySection.innerHTML =
+                `<div class='col-12'><div class='alert alert-info text-center'>No order history.</div></div>`;
             return;
         }
 
-        // Show loading indicator
-        orderListSection.innerHTML = 
+        // Show loading indicators
+        activeOrdersSection.innerHTML = 
+            `<div class='col-12 text-center'><div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div></div>`;
+        orderHistorySection.innerHTML = 
             `<div class='col-12 text-center'><div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div></div>`;
@@ -31,13 +71,39 @@
             // Show latest orders first by reversing the history
             const reversedOrderHistory = orderHistory.slice().reverse();
             const orderPromises = reversedOrderHistory.map(orderId => renderOrder(orderId));
-            const orderHtmlResults = await Promise.all(orderPromises);
+            const orderResults = await Promise.all(orderPromises);
             
-            // Join the HTML strings and set the innerHTML
-            orderListSection.innerHTML = orderHtmlResults.join('');
+            // Separate active orders from history
+            const activeOrdersHtml = [];
+            const orderHistoryHtml = [];
+            
+            orderResults.forEach(result => {
+                if (result.html && result.status) {
+                    if (activeStatuses.includes(result.status.toLowerCase())) {
+                        activeOrdersHtml.push(result.html);
+                    } else if (historyStatuses.includes(result.status.toLowerCase())) {
+                        orderHistoryHtml.push(result.html);
+                    }
+                }
+            });
+            
+            // Update the sections
+            if (activeOrdersHtml.length > 0) {
+                activeOrdersSection.innerHTML = activeOrdersHtml.join('');
+            } else {
+                activeOrdersSection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No active orders.</div></div>`;
+            }
+            
+            if (orderHistoryHtml.length > 0) {
+                orderHistorySection.innerHTML = orderHistoryHtml.join('');
+            } else {
+                orderHistorySection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No order history.</div></div>`;
+            }
         } catch (error) {
             console.error('Error loading orders:', error);
-            orderListSection.innerHTML = 
+            activeOrdersSection.innerHTML = 
+                `<div class='col-12'><div class='alert alert-danger text-center'>Error loading orders. Please try again later.</div></div>`;
+            orderHistorySection.innerHTML = 
                 `<div class='col-12'><div class='alert alert-danger text-center'>Error loading orders. Please try again later.</div></div>`;
         }
     }
@@ -53,15 +119,13 @@
 
             if (!data.success) {
                 console.error(`Error fetching order ${orderId}:`, data.error);
-                return `<div class='col-md-8'><div class='alert alert-warning'>Could not load details for order ID ${orderId}.</div></div>`;
+                return {
+                    html: `<div class='col-md-8'><div class='alert alert-warning'>Could not load details for order ID ${orderId}.</div></div>`,
+                    status: null
+                };
             }
 
             const order = data.order;
-            
-            // Skip archived orders
-            if (order.status === 'archived') {
-                return '';
-            }
             
             let itemsHtml = '';
             order.items.forEach(item => {
@@ -72,9 +136,22 @@
                               </tr>`;
             });
 
-            // Return the HTML string for this order card
-            return `
-                <div class='col-md-8' data-order-id="${order.order_id}">
+            // Determine badge color class based on status
+            let badgeClass = 'bg-warning text-dark';
+            if (order.status === 'ready') {
+                badgeClass = 'bg-success text-white';
+            } else if (order.status === 'picked up') {
+                badgeClass = 'bg-primary text-white';
+            } else if (order.status === 'cancelled') {
+                badgeClass = 'bg-danger text-white';
+            } else if (order.status === 'archived') {
+                badgeClass = 'bg-secondary text-white';
+            }
+
+            // Return the HTML string for this order card and its status
+            return {
+                html: `
+                <div class='col-md-8' data-order-id="${order.order_id}" data-order-status="${order.status}">
                     <div class='card menu-item-card order-confirmation-card shadow mb-4'>
                         <div class='card-header order-card-header'>
                             <h4 class='mb-0 menu-item-name'>Order Confirmation</h4>
@@ -88,7 +165,7 @@
                                     <p><strong>Name:</strong> ${order.customer_name}</p>
                                     <p><strong>Phone:</strong> ${order.customer_phone}</p>
                                     <p><strong>Email:</strong> ${order.customer_email || '-'}</p>
-                                    <p><strong>Status:</strong> <span class="badge bg-warning text-dark order-status">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge ${badgeClass} order-status">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></p>
                                 </div>
                                 <!-- Right Column: Items & Total -->
                                 <div class="col-md-6">
@@ -104,19 +181,27 @@
                             </div>
                         </div>
                     </div>
-                </div>`;
+                </div>`,
+                status: order.status
+            };
         } catch (error) {
             console.error(`Error fetching order ${orderId}:`, error);
-            return `<div class='col-md-8'><div class='alert alert-danger'>Failed to load details for order ID ${orderId}.</div></div>`;
+            return {
+                html: `<div class='col-md-8'><div class='alert alert-danger'>Failed to load details for order ID ${orderId}.</div></div>`,
+                status: null
+            };
         }
     }
 
     // Function to update an existing order card or add a new one
     function updateOrderCard(order) {
-        // Skip archived orders
-        if (order.status === 'archived') {
-            return;
+        // Function to check if the order belongs in active or history
+        function isActiveOrder(status) {
+            return activeStatuses.includes(status.toLowerCase());
         }
+        
+        // Get the current status of the order
+        const currentStatus = order.status.toLowerCase();
         
         // Check if this order is in our history
         if (!orderHistory.includes(order.order_id)) {
@@ -125,43 +210,87 @@
             localStorage.setItem('order_history', JSON.stringify(orderHistory));
             
             // Render and insert the new order
-            renderOrder(order.order_id).then(html => {
-                if (html) {
+            renderOrder(order.order_id).then(result => {
+                if (result.html) {
+                    const targetSection = isActiveOrder(currentStatus) ? activeOrdersSection : orderHistorySection;
+                    
                     // Add to the top of the list
-                    if (orderListSection.firstChild) {
-                        orderListSection.insertAdjacentHTML('afterbegin', html);
+                    if (targetSection.firstChild) {
+                        targetSection.insertAdjacentHTML('afterbegin', result.html);
                     } else {
-                        orderListSection.innerHTML = html;
+                        targetSection.innerHTML = result.html;
+                    }
+                    
+                    // Replace empty list message if it exists
+                    const emptyMessage = targetSection.querySelector('.alert.alert-info');
+                    if (emptyMessage) {
+                        emptyMessage.remove();
                     }
                 }
             });
-            
-            // Replace empty list message if it exists
-            const emptyMessage = orderListSection.querySelector('.alert.alert-info');
-            if (emptyMessage) {
-                emptyMessage.remove();
-            }
         } else {
-            // Update the status in the existing card
+            // Find the existing card
             const existingCard = document.querySelector(`[data-order-id="${order.order_id}"]`);
             if (existingCard) {
-                const statusBadge = existingCard.querySelector('.order-status');
-                if (statusBadge) {
-                    statusBadge.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                const oldStatus = existingCard.getAttribute('data-order-status').toLowerCase();
+                const newStatus = order.status.toLowerCase();
+                
+                // Check if the order is moving between tabs
+                if (isActiveOrder(oldStatus) !== isActiveOrder(newStatus)) {
+                    // Need to move the card to a different tab
+                    existingCard.remove();
                     
-                    // Update badge color based on status
-                    statusBadge.className = 'badge order-status';
-                    if (order.status === 'preparing') {
-                        statusBadge.classList.add('bg-warning', 'text-dark');
-                    } else if (order.status === 'ready') {
-                        statusBadge.classList.add('bg-success', 'text-white');
-                    } else if (order.status === 'picked_up') {
-                        statusBadge.classList.add('bg-primary', 'text-white');
-                    } else if (order.status === 'cancelled') {
-                        statusBadge.classList.add('bg-danger', 'text-white');
+                    // Re-render the order in the new section
+                    renderOrder(order.order_id).then(result => {
+                        if (result.html) {
+                            const targetSection = isActiveOrder(newStatus) ? activeOrdersSection : orderHistorySection;
+                            
+                            // Add to the top of the list
+                            if (targetSection.firstChild) {
+                                targetSection.insertAdjacentHTML('afterbegin', result.html);
+                            } else {
+                                targetSection.innerHTML = result.html;
+                            }
+                            
+                            // Replace empty list message if it exists
+                            const emptyMessage = targetSection.querySelector('.alert.alert-info');
+                            if (emptyMessage) {
+                                emptyMessage.remove();
+                            }
+                        }
+                    });
+                } else {
+                    // Just update the status badge
+                    const statusBadge = existingCard.querySelector('.order-status');
+                    if (statusBadge) {
+                        statusBadge.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                        existingCard.setAttribute('data-order-status', order.status);
+                        
+                        // Update badge color based on status
+                        statusBadge.className = 'badge order-status';
+                        if (order.status === 'preparing') {
+                            statusBadge.classList.add('bg-warning', 'text-dark');
+                        } else if (order.status === 'ready') {
+                            statusBadge.classList.add('bg-success', 'text-white');
+                        } else if (order.status === 'picked up') {
+                            statusBadge.classList.add('bg-primary', 'text-white');
+                        } else if (order.status === 'cancelled') {
+                            statusBadge.classList.add('bg-danger', 'text-white');
+                        } else if (order.status === 'archived') {
+                            statusBadge.classList.add('bg-secondary', 'text-white');
+                        }
                     }
                 }
             }
+        }
+        
+        // Check if sections are empty and add messages if needed
+        if (activeOrdersSection.children.length === 0) {
+            activeOrdersSection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No active orders.</div></div>`;
+        }
+        
+        if (orderHistorySection.children.length === 0) {
+            orderHistorySection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No order history.</div></div>`;
         }
     }
 

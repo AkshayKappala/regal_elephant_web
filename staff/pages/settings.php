@@ -92,7 +92,19 @@
 // For demonstration purposes - these would be connected to real API endpoints in a production environment
 document.getElementById('password-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    showAlert('Password updated successfully!', 'success');
+    // Password updated successfully
+    console.log('Password updated successfully');
+    
+    // Optional visual feedback: add a success message to the form
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'alert alert-success mt-3';
+    feedbackDiv.textContent = 'Password updated successfully!';
+    this.appendChild(feedbackDiv);
+    
+    // Remove message after a delay
+    setTimeout(() => {
+        feedbackDiv.remove();
+    }, 3000);
 });
 
 // Archive Orders Functionality
@@ -124,8 +136,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('archiveOrdersModal'));
                     modal.hide();
                     
-                    // Show success message
-                    showAlert('All orders have been successfully archived.', 'success');
+                    // Log success
+                    console.log('All orders have been successfully archived.');
                     
                     // Reset checkbox
                     confirmCheck.checked = false;
@@ -135,13 +147,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     if(typeof updateOrderStats === 'function') {
                         updateOrderStats();
                     }
+                    
+                    // Optional: Add visual feedback on the page
+                    const settingsCard = document.querySelector('.card-body');
+                    if (settingsCard) {
+                        const feedbackDiv = document.createElement('div');
+                        feedbackDiv.className = 'alert alert-success mt-3';
+                        feedbackDiv.textContent = 'All orders have been successfully archived.';
+                        settingsCard.appendChild(feedbackDiv);
+                        
+                        // Remove the message after a delay
+                        setTimeout(() => {
+                            feedbackDiv.remove();
+                        }, 3000);
+                    }
                 } else {
                     throw new Error(data.error || 'Failed to archive orders');
                 }
             })
             .catch(error => {
-                showAlert('Error: ' + error.message, 'danger');
                 console.error('Error:', error);
+                // Display error in the modal
+                const modalBody = document.querySelector('#archiveOrdersModal .modal-body');
+                if (modalBody) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger mt-3';
+                    errorDiv.textContent = 'Error: ' + error.message;
+                    modalBody.appendChild(errorDiv);
+                    
+                    // Remove message after some time
+                    setTimeout(() => {
+                        errorDiv.remove();
+                    }, 5000);
+                }
             })
             .finally(() => {
                 // Reset button state

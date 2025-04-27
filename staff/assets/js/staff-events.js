@@ -1,12 +1,25 @@
 /**
  * Server-Sent Events handling for the staff portal
  */
-import { showAlert, updateOrderStats } from './staff-ui.js';
+import { updateOrderStats } from './staff-ui.js';
 import { updateDashboardOrders, refreshDashboardOrders, updateOrdersTableWithNewOrders, refreshOrdersTable } from './staff-orders.js';
 import { formatStatus } from './staff-utils.js';
 
-// Track processed events to prevent duplicate notifications
+// Track processed events to prevent duplicate processing
 const processedEvents = new Set();
+// Track orders we've already seen - using localStorage for persistence
+const processedOrders = new Set(
+    JSON.parse(localStorage.getItem('processedOrders') || '[]')
+);
+
+// Function to save processed orders to localStorage for persistence
+function saveProcessedOrders() {
+    // Convert Set to Array for storage
+    const ordersArray = Array.from(processedOrders);
+    // Limit to last 500 entries to prevent excessive storage
+    const limitedArray = ordersArray.slice(-500);
+    localStorage.setItem('processedOrders', JSON.stringify(limitedArray));
+}
 
 /**
  * Initialize Server-Sent Events for real-time updates
@@ -41,38 +54,28 @@ export function initializeSSEConnection() {
             // Handle new preparing orders (new orders)
             const newOrders = data.orders.filter(order => order.status === 'preparing');
             if (newOrders.length > 0) {
-                // Process each new order, tracking which ones we've seen
-                newOrders.forEach(order => {
-                    // Create a unique ID for this order
+                // Identify truly unprocessed orders (those we haven't seen before)
+                const unprocessedOrders = newOrders.filter(order => {
                     const orderUniqueId = `new_order_${order.order_id}`;
-                    
-                    // Skip if we've already processed this order
-                    if (processedEvents.has(orderUniqueId)) {
-                        console.log(`Skipping already processed order: ${orderUniqueId}`);
-                        return;
+                    if (processedOrders.has(orderUniqueId)) {
+                        return false; // Skip if we've already processed this order
                     }
                     
-                    // Mark this order as processed
-                    processedEvents.add(orderUniqueId);
-                });
-                
-                // Only show notification and update UI if we have unprocessed orders
-                const unprocessedOrders = newOrders.filter(order => {
-                    return processedEvents.has(`new_order_${order.order_id}`);
+                    // Mark this order as processed and save to localStorage
+                    processedOrders.add(orderUniqueId);
+                    saveProcessedOrders();
+                    return true; // This is a new order we should process
                 });
                 
                 if (unprocessedOrders.length > 0) {
-                    // Show notification
-                    showAlert(`${unprocessedOrders.length} new order(s) received!`, 'info');
-                    
                     // Update dashboard recent orders if on dashboard page
                     if (document.querySelector('.orders-table')) {
-                        updateDashboardOrders(newOrders);
+                        updateDashboardOrders(unprocessedOrders);
                     }
                     
                     // Update orders table if on orders page
                     if (document.getElementById('orders-table')) {
-                        updateOrdersTableWithNewOrders(newOrders);
+                        updateOrdersTableWithNewOrders(unprocessedOrders);
                     }
                 }
             }
@@ -142,10 +145,14 @@ export function initializeSSEConnection() {
                     
                     if (document.getElementById('orders-table')) {
                         refreshOrdersTable();
+                        
+                        // Mark this order as processed without showing notification
+                        const orderUniqueId = `new_order_${eventData.order_id}`;
+                        if (!processedOrders.has(orderUniqueId)) {
+                            processedOrders.add(orderUniqueId);
+                            saveProcessedOrders();
+                        }
                     }
-                    
-                    // Show a notification
-                    showAlert('New order received!', 'info');
                 }
                 
                 // If this is a status change, update the UI as needed
@@ -242,9 +249,6 @@ function handleOrderUpdateEvent(order) {
             statusBadge.className = 'badge';
             statusBadge.classList.add(status.badgeClass);
         }
-        
-        // Show a notification
-        showAlert(`Order status updated to: ${order.status}`, 'info');
     }
     
     // If on orders page, check if we need to update the table

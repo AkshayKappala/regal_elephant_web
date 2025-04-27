@@ -3,42 +3,6 @@
  */
 
 /**
- * Display an alert message
- * @param {string} message - The message to display
- * @param {string} type - The alert type (success, info, warning, danger)
- */
-export function showAlert(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.setAttribute('role', 'alert');
-    
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-    
-    // Find the alert container or create one
-    let alertContainer = document.getElementById('alert-container');
-    if (!alertContainer) {
-        alertContainer = document.createElement('div');
-        alertContainer.id = 'alert-container';
-        alertContainer.className = 'container-fluid mt-3';
-        
-        const mainContent = document.querySelector('main');
-        if (mainContent) {
-            mainContent.prepend(alertContainer);
-        }
-    }
-    
-    alertContainer.appendChild(alertDiv);
-    
-    // Auto-close after 5 seconds
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
-}
-
-/**
  * Update stats display with optional animation
  * @param {string} elementId - The ID of the element to update
  * @param {number} newValue - The new value to display

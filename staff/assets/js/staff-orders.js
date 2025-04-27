@@ -2,7 +2,6 @@
  * Orders functionality for the staff portal
  */
 import { formatDate, formatStatus, formatContactInfo, isActiveStatus } from './staff-utils.js';
-import { showAlert } from './staff-ui.js';
 
 /**
  * Setup handlers for order status changes
@@ -53,24 +52,17 @@ export function updateOrderStatus(orderId, newStatus) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // If we're on the orders list page, show success alert and trigger refresh
+            // If we're on the orders list page, trigger a refresh
             if (document.getElementById('orders-table')) {
-                showAlert('Order status updated successfully!', 'success');
-                
-                // Refresh the table data - still needed for any other orders that might have changed
+                // Refresh the table data - needed for any other orders that might have changed
                 refreshOrdersTable();
-            } 
-            // If we're on the order details page, show success alert
-            else if (document.getElementById('status-badge')) {
-                showAlert('Order status updated successfully!', 'success');
             }
         } else {
-            showAlert('Error updating order status: ' + (data.error || 'Unknown error'), 'danger');
+            console.error('Error updating order status:', data.error || 'Unknown error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('Failed to update order status. Please try again.', 'danger');
     });
 }
 
