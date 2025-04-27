@@ -89,14 +89,20 @@ export function initializeSSEConnection() {
                         if (event.event_type === 'new_order') {
                             // Play notification sound for new orders
                             playNotificationSound();
-                            
-                            // Force refresh the orders table for new orders
-                            if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
-                                console.log('Refreshing orders table due to new_order event');
+
+                            // Use the specific function to add the new order to the table
+                            // instead of doing a full refresh.
+                            // Assuming eventData contains the new order object.
+                            if (typeof updateOrdersTableWithNewOrders === 'function') {
+                                console.log('Adding new order directly to table:', eventData);
+                                updateOrdersTableWithNewOrders([eventData]); // Pass eventData as an array
+                            } else {
+                                // Fallback to refresh if the specific function isn't available
+                                console.log('Refreshing orders table due to new_order event (fallback)');
                                 refreshOrdersTable();
                             }
                         }
-                        
+
                         if (event.event_type === 'status_change') {
                             console.log('Handling status change event:', eventData);
                             handleStatusChangeEvent(eventData);
