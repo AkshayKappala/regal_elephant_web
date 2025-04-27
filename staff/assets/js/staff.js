@@ -44,196 +44,29 @@ function initializeSSEConnection() {
             // Handle new preparing orders (new orders)
             const newOrders = data.orders.filter(order => order.status === 'preparing');
             if (newOrders.length > 0) {
-                // Show notification only (sound removed)
+                // Show notification only
                 showAlert(`${newOrders.length} new order(s) received!`, 'info');
                 
                 // DIRECT UPDATE: Add the new orders to the dashboard recent orders table
-                const recentOrdersTable = document.querySelector('.orders-table tbody');
-                if (recentOrdersTable) {
-                    // For each new order, check if it already exists before adding
-                    newOrders.forEach(order => {
-                        // Check if this order is already in the table to prevent duplicates
-                        const existingOrderRow = Array.from(recentOrdersTable.querySelectorAll('tr')).find(row => {
-                            const orderLink = row.querySelector('td:last-child a');
-                            if (orderLink) {
-                                const href = orderLink.getAttribute('href');
-                                const existingOrderId = href.match(/id=(\d+)/)?.[1];
-                                return existingOrderId == order.order_id;
-                            }
-                            return false;
-                        });
-                        
-                        if (existingOrderRow) {
-                            // Order already exists in the table, don't add it again
-                            return;
-                        }
-                        
-                        // Check the table structure to determine if we're on dashboard or orders page
-                        const isDashboardTable = !recentOrdersTable.closest('table').querySelector('th:nth-child(3)').textContent.includes('Contact');
-                        
-                        const row = document.createElement('tr');
-                        row.setAttribute('data-order-id', order.order_id);
-                        
-                        // Format the date
-                        const orderDate = new Date(order.order_placed_time);
-                        const formattedDate = `${orderDate.toLocaleString('default', { month: 'short' })} ${orderDate.getDate()}, ${orderDate.getHours()}:${String(orderDate.getMinutes()).padStart(2, '0')}`;
-                        
-                        if (isDashboardTable) {
-                            // Dashboard table format (no Contact column)
-                            row.innerHTML = `
-                                <td>${order.order_number}</td>
-                                <td>${order.customer_name}</td>
-                                <td>${order.item_count}</td>
-                                <td>₹${parseFloat(order.order_total).toFixed(2)}</td>
-                                <td>${formattedDate}</td>
-                                <td>
-                                    <span class="badge badge-${order.status.replace(' ', '-')}">
-                                        ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="?page=order-details&id=${order.order_id}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
-                                </td>
-                            `;
-                        }
-                        
-                        // Insert at the beginning of the table
-                        if (recentOrdersTable.firstElementChild) {
-                            recentOrdersTable.insertBefore(row, recentOrdersTable.firstElementChild);
-                        } else {
-                            recentOrdersTable.appendChild(row);
-                        }
-                        
-                        // Remove the last row if we now have more than 5 rows
-                        const allRows = recentOrdersTable.querySelectorAll('tr');
-                        if (allRows.length > 5) {
-                            recentOrdersTable.removeChild(allRows[allRows.length - 1]);
-                        }
-                    });
+                updateDashboardOrders(newOrders);
+                
+                // Update orders table if on orders page
+                if (document.getElementById('orders-table')) {
+                    updateOrdersTableWithNewOrders(newOrders);
                 }
             }
             
-            // Update orders table if on orders page
-            if (document.getElementById('orders-table')) {
-                // DIRECT UPDATE: Add the new orders to the orders table
-                const ordersTableBody = document.querySelector('#orders-table tbody');
-                if (ordersTableBody) {
-                    // For each new order, add it to the top of the table if it doesn't already exist
-                    data.orders.forEach(order => {
-                        // Check if the order is already in the table
-                        const existingRow = ordersTableBody.querySelector(`tr[data-order-id="${order.order_id}"]`);
-                        if (existingRow) return; // Skip if already exists
-                        
-                        const row = document.createElement('tr');
-                        row.setAttribute('data-order-id', order.order_id);
-                        
-                        if (order.status === 'archived') {
-                            row.className = 'table-secondary';
-                        }
-                        
-                        // Format the date
-                        const orderDate = new Date(order.order_placed_time);
-                        const formattedDate = `${orderDate.toLocaleString('default', { month: 'short' })} ${orderDate.getDate()}, ${orderDate.getHours()}:${String(orderDate.getMinutes()).padStart(2, '0')}`;
-                        
-                        // Create customer contact info with email if available
-                        const contactInfo = order.customer_email 
-                            ? `${order.customer_phone}<br><small>${order.customer_email}</small>`
-                            : order.customer_phone;
-
-                        // Generate status-dependent dropdown menu
-                        let dropdownMenu = '';
-                        
-                        // Only show action dropdown for non-archived orders
-                        if (order.status !== 'archived') {
-                            let menuItems = '';
-                            
-                            // Show "Mark as Ready" only for preparing orders
-                            if (order.status === 'preparing') {
-                                menuItems += `
-                                    <li>
-                                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="ready">
-                                            <i class="bi bi-check-circle text-success"></i> Mark as Ready
-                                        </button>
-                                    </li>`;
-                            }
-                            
-                            // Show "Mark as Picked Up" only for ready orders
-                            if (order.status === 'ready') {
-                                menuItems += `
-                                    <li>
-                                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="picked up">
-                                            <i class="bi bi-bag-check text-secondary"></i> Mark as Picked Up
-                                        </button>
-                                    </li>`;
-                            }
-                            
-                            // Show "Cancel Order" for active orders only (not cancelled, picked up, or archived)
-                            if (order.status !== 'cancelled' && order.status !== 'picked up' && order.status !== 'archived') {
-                                menuItems += `
-                                    <li>
-                                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="cancelled">
-                                            <i class="bi bi-x-circle text-danger"></i> Cancel Order
-                                        </button>
-                                    </li>`;
-                            }
-                            
-                            // Only show archive option for non-archived orders
-                            if (menuItems) {
-                                menuItems += `
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="archived">
-                                            <i class="bi bi-archive text-warning"></i> Archive Order
-                                        </button>
-                                    </li>`;
-                            }
-                            
-                            // Only create dropdown if there are menu items
-                            if (menuItems) {
-                                dropdownMenu = `
-                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <span class="visually-hidden">Toggle Dropdown</span>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        ${menuItems}
-                                    </ul>`;
-                            }
-                        }
-
-                        row.innerHTML = `
-                            <td>${order.order_number}</td>
-                            <td>${order.customer_name}</td>
-                            <td>${contactInfo}</td>
-                            <td>${order.item_count}</td>
-                            <td>₹${parseFloat(order.order_total).toFixed(2)}</td>
-                            <td>${formattedDate}</td>
-                            <td>
-                                <span class="badge badge-${order.status.replace(' ', '-')}">
-                                    ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="?page=order-details&id=${order.order_id}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
-                                    ${dropdownMenu}
-                                </div>
-                            </td>
-                        `;
-
-                        // Insert at the beginning of the table
-                        if (ordersTableBody.firstChild) {
-                            ordersTableBody.insertBefore(row, ordersTableBody.firstChild);
-                        } else {
-                            ordersTableBody.appendChild(row);
-                        }
-                    });
-                    
-                    // Re-attach event listeners for the new buttons
-                    setupStatusChangeHandlers();
+            // Also handle any other status changes that might be in the batch
+            const otherOrders = data.orders.filter(order => order.status !== 'preparing');
+            if (otherOrders.length > 0) {
+                // Update dashboard if we're on that page
+                if (document.getElementById('dashboard-stats')) {
+                    updateDashboardOrders(otherOrders);
+                }
+                
+                // Update orders table if on orders page
+                if (document.getElementById('orders-table')) {
+                    updateOrdersTableWithNewOrders(otherOrders);
                 }
             }
         }
@@ -297,6 +130,221 @@ function initializeSSEConnection() {
             initializeSSEConnection();
         }, 5000);
     };
+}
+
+// Add a new helper function to update the orders table with new orders
+function updateOrdersTableWithNewOrders(newOrders) {
+    const ordersTableBody = document.querySelector('#orders-table tbody');
+    if (!ordersTableBody) return;
+    
+    // For each new order, check if it already exists and apply filter rules
+    newOrders.forEach(order => {
+        // Check if this order is already in the table
+        const existingOrderRow = ordersTableBody.querySelector(`tr[data-order-id="${order.order_id}"]`);
+        if (existingOrderRow) return; // Skip if already exists
+        
+        // Check if the order should be visible based on current filters
+        if (window.currentFilterState) {
+            const filterState = window.currentFilterState.getValues();
+            
+            // Check if this order matches the current filter
+            if (filterState.status && filterState.status !== 'all') {
+                if (filterState.status === 'active') {
+                    // "Active" means not archived
+                    if (order.status === 'archived') return;
+                } else if (filterState.status !== order.status) {
+                    return; // Skip if status doesn't match filter
+                }
+            }
+            
+            // Skip archived orders if "showArchived" is false
+            if (!filterState.showArchived && order.status === 'archived') {
+                return;
+            }
+            
+            // Date filter and search filter would require more complex logic
+            // For simplicity, we're skipping those checks and assuming they pass
+        }
+        
+        // If we got here, the order should be added to the table
+        const row = document.createElement('tr');
+        row.setAttribute('data-order-id', order.order_id);
+        
+        if (order.status === 'archived') {
+            row.className = 'table-secondary';
+        }
+        
+        // Format the date
+        const orderDate = new Date(order.order_placed_time);
+        const formattedDate = `${orderDate.toLocaleString('default', { month: 'short' })} ${orderDate.getDate()}, ${orderDate.getHours()}:${String(orderDate.getMinutes()).padStart(2, '0')}`;
+        
+        // Create customer contact info with email if available
+        const contactInfo = order.customer_email 
+            ? `${order.customer_phone}<br><small>${order.customer_email}</small>`
+            : order.customer_phone;
+
+        // Generate status-dependent dropdown menu
+        let dropdownMenu = '';
+        
+        // Only show action dropdown for non-archived orders
+        if (order.status !== 'archived') {
+            let menuItems = '';
+            
+            // Show "Mark as Ready" only for preparing orders
+            if (order.status === 'preparing') {
+                menuItems += `
+                    <li>
+                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="ready">
+                            <i class="bi bi-check-circle text-success"></i> Mark as Ready
+                        </button>
+                    </li>`;
+            }
+            
+            // Show "Mark as Picked Up" only for ready orders
+            if (order.status === 'ready') {
+                menuItems += `
+                    <li>
+                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="picked up">
+                            <i class="bi bi-bag-check text-secondary"></i> Mark as Picked Up
+                        </button>
+                    </li>`;
+            }
+            
+            // Show "Cancel Order" for active orders only (not cancelled, picked up, or archived)
+            if (order.status !== 'cancelled' && order.status !== 'picked up' && order.status !== 'archived') {
+                menuItems += `
+                    <li>
+                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="cancelled">
+                            <i class="bi bi-x-circle text-danger"></i> Cancel Order
+                        </button>
+                    </li>`;
+            }
+            
+            // Only show archive option for non-archived orders
+            if (menuItems) {
+                menuItems += `
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button class="dropdown-item quick-status-change" data-order-id="${order.order_id}" data-status="archived">
+                            <i class="bi bi-archive text-warning"></i> Archive Order
+                        </button>
+                    </li>`;
+            }
+            
+            // Only create dropdown if there are menu items
+            if (menuItems) {
+                dropdownMenu = `
+                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        ${menuItems}
+                    </ul>`;
+            }
+        }
+
+        row.innerHTML = `
+            <td>${order.order_number}</td>
+            <td>${order.customer_name}</td>
+            <td>${contactInfo}</td>
+            <td>${order.item_count}</td>
+            <td>₹${parseFloat(order.order_total).toFixed(2)}</td>
+            <td>${formattedDate}</td>
+            <td>
+                <span class="badge badge-${order.status.replace(' ', '-')}">
+                    ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group">
+                    <a href="?page=order-details&id=${order.order_id}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                    ${dropdownMenu}
+                </div>
+            </td>
+        `;
+
+        // Insert at the beginning of the table
+        if (ordersTableBody.firstChild) {
+            ordersTableBody.insertBefore(row, ordersTableBody.firstChild);
+        } else {
+            ordersTableBody.appendChild(row);
+        }
+        
+        // If there was a "No orders found" message, remove it
+        const noOrdersRow = ordersTableBody.querySelector('tr td[colspan="8"].text-center');
+        if (noOrdersRow) {
+            noOrdersRow.closest('tr').remove();
+        }
+    });
+    
+    // Re-attach event listeners for the new buttons
+    setupStatusChangeHandlers();
+}
+
+// Helper function to update the dashboard recent orders
+function updateDashboardOrders(newOrders) {
+    const recentOrdersTable = document.querySelector('.orders-table tbody');
+    if (!recentOrdersTable) return;
+
+    // For each new order, add it to the dashboard
+    newOrders.forEach(order => {
+        // Check if this order is already in the table
+        const existingOrderRow = Array.from(recentOrdersTable.querySelectorAll('tr')).find(row => {
+            const orderLink = row.querySelector('td:last-child a');
+            if (orderLink) {
+                const href = orderLink.getAttribute('href');
+                const existingOrderId = href.match(/id=(\d+)/)?.[1];
+                return existingOrderId == order.order_id;
+            }
+            return false;
+        });
+        
+        if (existingOrderRow) {
+            // Order already exists in the table, don't add it again
+            return;
+        }
+        
+        // Create a new row for this order
+        const row = document.createElement('tr');
+        row.setAttribute('data-order-id', order.order_id);
+        
+        // Format the date
+        const orderDate = new Date(order.order_placed_time);
+        const formattedDate = `${orderDate.toLocaleString('default', { month: 'short' })} ${orderDate.getDate()}, ${orderDate.getHours()}:${String(orderDate.getMinutes()).padStart(2, '0')}`;
+        
+        row.innerHTML = `
+            <td>${order.order_number}</td>
+            <td>${order.customer_name}</td>
+            <td>${order.item_count}</td>
+            <td>₹${parseFloat(order.order_total).toFixed(2)}</td>
+            <td>${formattedDate}</td>
+            <td>
+                <span class="badge badge-${order.status.replace(' ', '-')}">
+                    ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </span>
+            </td>
+            <td>
+                <a href="?page=order-details&id=${order.order_id}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> View
+                </a>
+            </td>
+        `;
+        
+        // Insert at the beginning of the table
+        if (recentOrdersTable.firstChild) {
+            recentOrdersTable.insertBefore(row, recentOrdersTable.firstChild);
+        } else {
+            recentOrdersTable.appendChild(row);
+        }
+        
+        // Remove the last row if we now have more than 5 rows
+        const allRows = recentOrdersTable.querySelectorAll('tr');
+        if (allRows.length > 5) {
+            recentOrdersTable.removeChild(allRows[allRows.length - 1]);
+        }
+    });
 }
 
 // Helper function to refresh the orders table with current filters
@@ -783,6 +831,8 @@ function updateOrdersTable(orders) {
 
     orders.forEach(order => {
         const row = document.createElement('tr');
+        row.setAttribute('data-order-id', order.order_id);
+        
         if (order.status === 'archived') {
             row.className = 'table-secondary';
         }
