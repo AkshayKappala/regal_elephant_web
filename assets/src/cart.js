@@ -1,9 +1,4 @@
-/**
- * Cart functionality - handles rendering cart contents and order submission
- */
-
 window.renderCart = function() {
-    // Ensure cartItems exists, default to empty object if not
     window.cartItems = window.cartItems || {};
 
     const cartDisplay = document.getElementById('cart-items-display');
@@ -42,7 +37,6 @@ window.renderCart = function() {
     // Check if cart is empty
     const cartIsEmpty = Object.keys(window.cartItems).length === 0;
 
-    // Show empty cart message if cart is empty
     if (cartIsEmpty) {
         cartDisplay.innerHTML = '<div class="col-12 text-center"><p class="cart-empty-message my-5">Your cart is empty.</p></div>';
         customerDetailsSection.style.display = 'none';
@@ -134,12 +128,11 @@ window.renderCart = function() {
         tipInput.dataset.listenerAttached = 'true';
     } else {
         let currentTip = parseFloat(tipInput.value);
-         if (isNaN(currentTip) || currentTip < 0) {
-             tipInput.value = (subtotal * defaultTipRate).toFixed(2);
-         }
+        if (isNaN(currentTip) || currentTip < 0) {
+            tipInput.value = (subtotal * defaultTipRate).toFixed(2);
+        }
     }
 
-    // Initial rendering of the summary
     renderSummary();
 
     // Create place order button
@@ -159,10 +152,6 @@ window.renderCart = function() {
     placeOrderContainer.appendChild(placeOrderButton);
 };
 
-/**
- * Handle order placement when the form is submitted
- * @param {Event} event - The form submit event
- */
 async function placeOrderHandler(event) {
     event.preventDefault();
     
@@ -173,16 +162,13 @@ async function placeOrderHandler(event) {
     let tip = parseFloat(tipInput.value);
     if (isNaN(tip) || tip < 0) tip = 0;
     
-    // Validate form inputs
     if (!name || !mobile) {
         alert('Please enter your Name and Mobile Number.');
         return;
     }
     
-    // Save customer details
     localStorage.setItem('customer_details', JSON.stringify({ name, mobile, email }));
     
-    // Prepare cart items data
     const cartItemsArr = Object.entries(window.cartItems).map(([key, item]) => ({
         name: item.name,
         price: item.price,
@@ -208,13 +194,11 @@ async function placeOrderHandler(event) {
         return;
     }
     
-    // Calculate order totals
     const cartItemsWithIds = itemIdData.items;
     const taxRate = 0.10;
     let subtotal = 0;
     cartItemsWithIds.forEach(item => { subtotal += item.price * item.quantity; });
     
-    // Create order payload
     const orderPayload = {
         name,
         mobile,
@@ -223,7 +207,6 @@ async function placeOrderHandler(event) {
         cartItems: cartItemsWithIds
     };
     
-    // Submit order to API
     let data;
     try {
         const configResp = await fetch('config/get_api_config.php');
@@ -252,12 +235,9 @@ async function placeOrderHandler(event) {
         return;
     }
     
-    // Handle order placement result
     if (data.success) {
-        // Clear cart data
         window.cartItems = {};
 
-        // Update UI
         if(typeof window.renderCart === 'function') {
             window.renderCart();
         }
@@ -265,18 +245,15 @@ async function placeOrderHandler(event) {
             window.updateCartBadge();
         }
 
-        // Reset form
         event.target.reset();
         if (tipInput) tipInput.value = (0).toFixed(2);
         
-        // Update order history
         let orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
         if (!orderHistory.includes(data.order_id)) {
             orderHistory.push(data.order_id);
         }
         localStorage.setItem('order_history', JSON.stringify(orderHistory));
 
-        // Navigate to orders page
         if (typeof window.loadContent === 'function') {
             window.loadContent('orders');
         } else {
