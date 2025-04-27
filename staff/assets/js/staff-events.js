@@ -1,5 +1,4 @@
-import { updateOrderStats } from './staff-ui.js';
-import { updateDashboardOrders, refreshDashboardOrders, updateOrdersTableWithNewOrders, refreshOrdersTable } from './staff-orders.js';
+import { updateOrdersTableWithNewOrders, refreshOrdersTable } from './staff-orders.js'; // Keep only orders related imports
 import { formatStatus } from './staff-utils.js';
 
 const processedEvents = new Set();
@@ -24,9 +23,6 @@ export function initializeSSEConnection() {
         // Fallback to polling
         setInterval(() => {
             refreshOrdersTable();
-            if (document.getElementById('dashboard-stats')) {
-                updateOrderStats(true);
-            }
         }, 15000); // Reduced polling interval from 30s to 15s for more frequent updates
         return;
     }
@@ -50,10 +46,6 @@ export function initializeSSEConnection() {
                 refreshOrdersTable();
                 console.log('Refreshing orders table on SSE connection');
             }
-            
-            if (document.getElementById('dashboard-stats')) {
-                updateOrderStats(true);
-            }
         });
         
         evtSource.addEventListener('orders_update', function(event) {
@@ -61,10 +53,6 @@ export function initializeSSEConnection() {
             const data = JSON.parse(event.data);
             
             if (data.orders && data.orders.length > 0) {
-                if (document.getElementById('dashboard-stats')) {
-                    updateOrderStats(true);
-                }
-                
                 // Force refresh orders table for any orders update
                 if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
                     console.log('Refreshing orders table due to orders_update event');
@@ -101,10 +89,6 @@ export function initializeSSEConnection() {
                         if (event.event_type === 'new_order') {
                             // Play notification sound for new orders
                             playNotificationSound();
-                            
-                            if (document.getElementById('dashboard-stats')) {
-                                updateOrderStats(true);
-                            }
                             
                             // Force refresh the orders table for new orders
                             if (document.getElementById('orders-table') || document.getElementById('active-orders-table')) {
@@ -179,9 +163,6 @@ export function initializeSSEConnection() {
                 // Fall back to polling
                 setInterval(() => {
                     refreshOrdersTable();
-                    if (document.getElementById('dashboard-stats')) {
-                        updateOrderStats(true);
-                    }
                 }, 15000); // Reduced polling interval for more frequent updates
             }
         };
@@ -212,9 +193,6 @@ export function initializeSSEConnection() {
         // Fall back to polling
         setInterval(() => {
             refreshOrdersTable();
-            if (document.getElementById('dashboard-stats')) {
-                updateOrderStats(true);
-            }
         }, 15000); // Reduced polling interval for more frequent updates
     }
 }
@@ -224,16 +202,6 @@ function handleStatusChangeEvent(eventData) {
     const newStatus = eventData.status;
     
     console.log(`Handling status change for order ${orderId} to ${newStatus}`);
-    
-    const dashboardRow = document.querySelector(`.orders-table tr[data-order-id="${orderId}"]`);
-    if (dashboardRow) {
-        const statusBadge = dashboardRow.querySelector('.badge');
-        if (statusBadge) {
-            const status = formatStatus(newStatus);
-            statusBadge.textContent = status.text;
-            statusBadge.className = `badge ${status.badgeClass}`;
-        }
-    }
     
     const ordersRow = document.querySelector(`#orders-table tr[data-order-id="${orderId}"]`);
     if (ordersRow) {

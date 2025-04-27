@@ -27,11 +27,11 @@ if (!isset($_SESSION['staff_logged_in']) || $_SESSION['staff_logged_in'] !== tru
 }
 
 // User is logged in, show the main dashboard
-$page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
-$allowedPages = ['dashboard', 'orders', 'order-details', 'settings', 'logout'];
+$page = isset($_GET['page']) ? $_GET['page'] : 'orders'; // Default to orders page
+$allowedPages = ['orders', 'order-details', 'settings', 'logout']; // Removed 'dashboard'
 
 if (!in_array($page, $allowedPages)) {
-    $page = 'dashboard';
+    $page = 'orders'; // Fallback to orders page
 }
 
 if ($page === 'logout') {
@@ -62,12 +62,6 @@ if ($page === 'logout') {
                         <p>The Regal Elephant</p>
                     </div>
                     <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
-                                <i class="bi bi-speedometer2 me-2"></i>
-                                Dashboard
-                            </a>
-                        </li>
                         <li class="nav-item">
                             <a class="nav-link <?php echo $page === 'orders' ? 'active' : ''; ?>" href="?page=orders">
                                 <i class="bi bi-cart me-2"></i>
