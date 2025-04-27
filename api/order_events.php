@@ -79,7 +79,7 @@ while (true) {
         if ($isStaff) {
             // First check for new or recently updated orders
             $query = "SELECT o.*, 
-                     (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) as item_count 
+                     (SELECT SUM(quantity) FROM order_items WHERE order_id = o.order_id) as item_count 
                      FROM orders o 
                      WHERE o.status != 'archived'
                      ORDER BY o.order_placed_time DESC LIMIT 10";
