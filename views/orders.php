@@ -34,6 +34,7 @@
     const pastOrderList = document.getElementById('past-order-list');
     const orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
     let activeOrderCount = 0;
+    let evtSource = null;
 
     // Add event listener to style the tabs when clicked
     document.querySelectorAll('#ordersTab .nav-link').forEach(tab => {
@@ -84,7 +85,7 @@
             }
 
             return `
-                <div class='col-md-8'>
+                <div class='col-md-8 order-card' data-order-id="${order.order_id}">
                     <div class='card menu-item-card order-confirmation-card shadow mb-4'>
                         <div class='card-header order-card-header'>
                             <h4 class='mb-0 menu-item-name'>Order Confirmation</h4>
@@ -97,7 +98,7 @@
                                     <p><strong>Name:</strong> ${order.customer_name}</p>
                                     <p><strong>Phone:</strong> ${order.customer_phone}</p>
                                     <p><strong>Email:</strong> ${order.customer_email || '-'}</p>
-                                    <p><strong>Status:</strong> <span class="badge ${badgeClass}">${statusText}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge ${badgeClass} order-status-badge">${statusText}</span></p>
                                 </div>
                                 <div class="col-md-6">
                                     <h5 class="mb-2">Items Ordered:</h5>
@@ -186,5 +187,211 @@
         const pastOrdersHtml = await Promise.all(pastOrders.map(order => renderOrder(order, pastOrderList)));
         pastOrderList.innerHTML = pastOrdersHtml.join('');
     }
+
+    // Setup SSE connections for real-time order updates
+    function setupSSEConnections() {
+        // Only setup SSE if browser supports it and if we have active orders
+        if (typeof EventSource === 'undefined' || activeOrders.length === 0) {
+            return;
+        }
+
+        // Close any existing connections
+        if (evtSource) {
+            evtSource.close();
+            evtSource = null;
+        }
+
+        // Setup SSE connection for each active order
+        activeOrders.forEach(order => {
+            const orderId = order.order_id;
+            const sseUrl = `api/order_events.php?order_id=${orderId}`;
+            
+            const eventSource = new EventSource(sseUrl);
+            
+            eventSource.addEventListener('order_update', function(event) {
+                const data = JSON.parse(event.data);
+                if (data.order && data.order.order_id === orderId) {
+                    console.log('Order updated via SSE:', data.order);
+                    updateOrderCard(data.order);
+                }
+            });
+            
+            eventSource.addEventListener('connection', function(event) {
+                console.log(`SSE connection established for order ${orderId}`);
+            });
+            
+            eventSource.onerror = function(error) {
+                console.error(`SSE error for order ${orderId}:`, error);
+                eventSource.close();
+                
+                // Reconnect after a delay
+                setTimeout(() => {
+                    setupSSEConnections();
+                }, 5000);
+            };
+            
+            // Store the event source in the global variable for the most recent order
+            if (!evtSource) {
+                evtSource = eventSource;
+            }
+        });
+    }
+    
+    // Update an order card with new data
+    function updateOrderCard(order) {
+        const orderCard = document.querySelector(`.order-card[data-order-id="${order.order_id}"]`);
+        if (!orderCard) return;
+        
+        // Update status badge
+        const statusBadge = orderCard.querySelector('.order-status-badge');
+        if (statusBadge) {
+            // Store current status before updating to check if it changed
+            const currentStatus = statusBadge.textContent.toLowerCase();
+            
+            let badgeClass = 'bg-warning text-dark';
+            let statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+            
+            if (order.status === 'ready') {
+                badgeClass = 'bg-success';
+                // Only notify if status changed from a different status to 'ready'
+                if (currentStatus !== 'ready') {
+                    // Play notification sound for ready orders
+                    playNotificationSound();
+                    // Show notification
+                    showNotification(`Your order #${order.order_number} is ready for pickup!`);
+                }
+            } else if (order.status === 'picked up') {
+                badgeClass = 'bg-secondary';
+                statusText = 'Picked Up';
+            } else if (order.status === 'cancelled') {
+                badgeClass = 'bg-danger';
+            } else if (order.status === 'archived') {
+                badgeClass = 'bg-info';
+                statusText = 'Completed';
+            }
+            
+            // Remove all classes and add the new ones
+            statusBadge.className = `badge ${badgeClass} order-status-badge`;
+            statusBadge.textContent = statusText;
+            
+            // Check if order has moved from active to past
+            if (order.status === 'cancelled' || order.status === 'picked up' || order.status === 'archived') {
+                // Move the order card to past orders
+                const orderCardHTML = orderCard.parentElement.outerHTML;
+                orderCard.parentElement.remove();
+                
+                // If past orders is empty, clear it first
+                if (pastOrderList.querySelector('.cart-empty-message')) {
+                    pastOrderList.innerHTML = '';
+                }
+                
+                pastOrderList.insertAdjacentHTML('afterbegin', orderCardHTML);
+                
+                // Update active order count
+                activeOrderCount--;
+                
+                // Update badge
+                const ordersBadge = document.getElementById('orders-count-badge');
+                if (ordersBadge) {
+                    if (activeOrderCount > 0) {
+                        ordersBadge.textContent = activeOrderCount;
+                    } else {
+                        ordersBadge.style.display = 'none';
+                        // Show empty message if no more active orders
+                        if (activeOrderList.children.length === 0) {
+                            activeOrderList.innerHTML = `<div class='col-12 text-center'><p class='mt-4 cart-empty-message'>You have no active orders.</p></div>`;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Function to play notification sound
+    function playNotificationSound() {
+        try {
+            const audio = new Audio('assets/sounds/notification.mp3');
+            audio.play();
+        } catch (e) {
+            console.error('Failed to play notification sound:', e);
+        }
+    }
+    
+    // Function to show a notification
+    function showNotification(message) {
+        if (!('Notification' in window)) {
+            console.log('This browser does not support notifications');
+            return;
+        }
+        
+        if (Notification.permission === 'granted') {
+            new Notification('Regal Elephant', {
+                body: message,
+                icon: 'assets/images/logo.png'
+            });
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    new Notification('Regal Elephant', {
+                        body: message,
+                        icon: 'assets/images/logo.png'
+                    });
+                }
+            });
+        }
+        
+        // Also show an in-page notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.maxWidth = '300px';
+        notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
+    // Set up SSE connections after rendering
+    setupSSEConnections();
+    
+    // Set up periodic polling fallback every 30 seconds
+    setInterval(async function() {
+        for (const orderId of orderHistory) {
+            try {
+                const response = await fetch(`api/get_order_details.php?order_id=${orderId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // Check if order is active
+                        const isCurrentlyActive = data.order.status !== 'archived' && 
+                                                 data.order.status !== 'cancelled' && 
+                                                 data.order.status !== 'picked up';
+                        
+                        // Find current order to compare with
+                        const existingActiveOrder = activeOrders.find(o => o.order_id === data.order.order_id);
+                        
+                        // Only update if status has changed
+                        if (existingActiveOrder && existingActiveOrder.status !== data.order.status) {
+                            console.log('Order status changed via polling:', data.order);
+                            updateOrderCard(data.order);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`Error polling order ${orderId}:`, error);
+            }
+        }
+    }, 30000);
 })();
 </script>

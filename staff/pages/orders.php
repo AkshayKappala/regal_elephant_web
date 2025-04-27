@@ -2,63 +2,15 @@
 require_once __DIR__ . '/../../config/database.php';
 $mysqli = Database::getConnection();
 
-// Filter parameters
-$status = isset($_GET['status']) ? $_GET['status'] : '';
-$date = isset($_GET['date']) ? $_GET['date'] : '';
-$search = isset($_GET['search']) ? $_GET['search'] : '';
-$showArchived = isset($_GET['show_archived']) ? filter_var($_GET['show_archived'], FILTER_VALIDATE_BOOLEAN) : false;
-
-// Build query conditions
-$conditions = [];
-$params = [];
-$types = '';
-
-if ($status) {
-    $conditions[] = "o.status = ?";
-    $params[] = $status;
-    $types .= 's';
-} else if (!$showArchived) {
-    // By default, don't show archived orders unless explicitly requested
-    $conditions[] = "o.status != 'archived'";
-}
-
-if ($date) {
-    $conditions[] = "DATE(o.order_placed_time) = ?";
-    $params[] = $date;
-    $types .= 's';
-}
-
-if ($search) {
-    $conditions[] = "(o.order_number LIKE ? OR o.customer_name LIKE ? OR o.customer_phone LIKE ?)";
-    $searchTerm = "%$search%";
-    $params[] = $searchTerm;
-    $params[] = $searchTerm;
-    $params[] = $searchTerm;
-    $types .= 'sss';
-}
-
-// Construct the WHERE clause
-$whereClause = '';
-if (!empty($conditions)) {
-    $whereClause = 'WHERE ' . implode(' AND ', $conditions);
-}
-
-// Prepare the query
-$query = "SELECT o.*, 
-          (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) as item_count 
-          FROM orders o 
-          $whereClause 
-          ORDER BY o.order_placed_time DESC";
-
 try {
-    $stmt = $mysqli->prepare($query);
+    // Get all orders in a single query with no filters
+    $query = "SELECT o.*, 
+              (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) as item_count 
+              FROM orders o 
+              ORDER BY o.order_placed_time DESC 
+              LIMIT 500";
     
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $result = $mysqli->query($query);
     
 } catch (Exception $e) {
     $error = "Error retrieving orders: " . $e->getMessage();
@@ -67,50 +19,6 @@ try {
 
 <div class="container-fluid">
     <h1 class="page-title">Orders Management</h1>
-    
-    <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" action="" class="row g-3">
-                <input type="hidden" name="page" value="orders">
-                
-                <div class="col-md-2">
-                    <label for="status-filter" class="form-label">Status</label>
-                    <select class="form-select" id="status-filter" name="status">
-                        <option value="">All Active Statuses</option>
-                        <option value="preparing" <?php echo $status === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
-                        <option value="ready" <?php echo $status === 'ready' ? 'selected' : ''; ?>>Ready</option>
-                        <option value="picked up" <?php echo $status === 'picked up' ? 'selected' : ''; ?>>Picked Up</option>
-                        <option value="cancelled" <?php echo $status === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                        <option value="archived" <?php echo $status === 'archived' ? 'selected' : ''; ?>>Archived</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-2">
-                    <label for="date-filter" class="form-label">Date</label>
-                    <input type="date" class="form-control" id="date-filter" name="date" value="<?php echo $date; ?>">
-                </div>
-                
-                <div class="col-md-3">
-                    <label for="search-filter" class="form-label">Search</label>
-                    <input type="text" class="form-control" id="search-filter" name="search" placeholder="Order #, Name, Phone" value="<?php echo htmlspecialchars($search); ?>">
-                </div>
-                
-                <div class="col-md-3">
-                    <label for="show-archived" class="form-label">Show Archived</label>
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" id="show-archived" name="show_archived" value="1" <?php echo $showArchived ? 'checked' : ''; ?> onChange="this.form.submit()">
-                        <label class="form-check-label" for="show-archived">Include archived orders</label>
-                    </div>
-                </div>
-                
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-custom me-2">Filter</button>
-                    <a href="?page=orders" class="btn btn-outline-secondary">Reset</a>
-                </div>
-            </form>
-        </div>
-    </div>
     
     <!-- Orders Table -->
     <div class="card">
@@ -135,7 +43,7 @@ try {
                             </thead>
                             <tbody>
                                 <?php while ($order = $result->fetch_assoc()): ?>
-                                    <tr <?php echo $order['status'] === 'archived' ? 'class="table-secondary"' : ''; ?>>
+                                    <tr data-order-id="<?php echo $order['order_id']; ?>" <?php echo $order['status'] === 'archived' ? 'class="table-secondary"' : ''; ?>>
                                         <td><?php echo htmlspecialchars($order['order_number']); ?></td>
                                         <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
                                         <td>
@@ -205,7 +113,7 @@ try {
                         </table>
                     </div>
                 <?php else: ?>
-                    <p class="text-center text-muted my-4">No orders found matching your criteria.</p>
+                    <p class="text-center text-muted my-4">No orders found.</p>
                 <?php endif; ?>
             <?php endif; ?>
         </div>

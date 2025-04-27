@@ -47,6 +47,32 @@ try {
             $pickupStmt->execute();
         }
         
+        // Trigger the event emission for real-time updates
+        $eventUrl = '../../api/order_status_events.php?order_id=' . $orderId . '&status=' . urlencode($status);
+        $absolutePath = realpath(__DIR__ . '/' . $eventUrl);
+        
+        if (file_exists($absolutePath)) {
+            // Method 1: Include the file directly (synchronous)
+            include_once $absolutePath;
+        } else {
+            // Method 2: Make an asynchronous HTTP request (if on the same server)
+            $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+            $path = explode('/staff', $_SERVER['REQUEST_URI'])[0] ?? '';
+            $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$orderId&status=" . urlencode($status);
+            
+            // Non-blocking request
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $eventEndpoint);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Short timeout - we don't care about the response
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_exec($ch);
+            curl_close($ch);
+        }
+        
         echo json_encode([
             'success' => true,
             'message' => 'Order status updated successfully'

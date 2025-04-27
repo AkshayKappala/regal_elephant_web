@@ -71,7 +71,7 @@ try {
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label for="order-status-select" class="form-label"><strong>Status:</strong></label>
-                                <select class="form-select status-select" id="order-status-select" data-order-id="<?php echo $order_id; ?>">
+                                <select class="form-select status-select" id="order-status-select" data-order-id="<?php echo $order_id; ?>" <?php echo $order['status'] == 'archived' ? 'disabled' : ''; ?>>
                                     <option value="preparing" <?php echo $order['status'] == 'preparing' ? 'selected' : ''; ?>>Preparing</option>
                                     <option value="ready" <?php echo $order['status'] == 'ready' ? 'selected' : ''; ?>>Ready for Pickup</option>
                                     <option value="picked up" <?php echo $order['status'] == 'picked up' ? 'selected' : ''; ?>>Picked Up</option>
@@ -157,27 +157,29 @@ try {
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <?php if ($order['status'] == 'preparing'): ?>
-                            <button class="btn btn-success quick-status-change" data-order-id="<?php echo $order_id; ?>" data-status="ready">
-                                <i class="bi bi-check-circle"></i> Mark as Ready
-                            </button>
+                        <?php if ($order['status'] == 'archived'): ?>
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-info-circle"></i> This order has been archived and cannot be modified.
+                            </div>
+                        <?php else: ?>
+                            <?php if ($order['status'] == 'preparing'): ?>
+                                <button class="btn btn-success quick-status-change" data-order-id="<?php echo $order_id; ?>" data-status="ready">
+                                    <i class="bi bi-check-circle"></i> Mark as Ready
+                                </button>
+                            <?php endif; ?>
+                            
+                            <?php if ($order['status'] == 'ready'): ?>
+                                <button class="btn btn-secondary quick-status-change" data-order-id="<?php echo $order_id; ?>" data-status="picked up">
+                                    <i class="bi bi-bag-check"></i> Mark as Picked Up
+                                </button>
+                            <?php endif; ?>
+                            
+                            <?php if ($order['status'] != 'cancelled' && $order['status'] != 'picked up' && $order['status'] != 'archived'): ?>
+                                <button class="btn btn-danger quick-status-change" data-order-id="<?php echo $order_id; ?>" data-status="cancelled">
+                                    <i class="bi bi-x-circle"></i> Cancel Order
+                                </button>
+                            <?php endif; ?>
                         <?php endif; ?>
-                        
-                        <?php if ($order['status'] == 'ready'): ?>
-                            <button class="btn btn-secondary quick-status-change" data-order-id="<?php echo $order_id; ?>" data-status="picked up">
-                                <i class="bi bi-bag-check"></i> Mark as Picked Up
-                            </button>
-                        <?php endif; ?>
-                        
-                        <?php if ($order['status'] != 'cancelled' && $order['status'] != 'picked up'): ?>
-                            <button class="btn btn-danger quick-status-change" data-order-id="<?php echo $order_id; ?>" data-status="cancelled">
-                                <i class="bi bi-x-circle"></i> Cancel Order
-                            </button>
-                        <?php endif; ?>
-                        
-                        <a href="#" class="btn btn-outline-primary" onclick="window.print();">
-                            <i class="bi bi-printer"></i> Print Order
-                        </a>
                     </div>
                 </div>
             </div>

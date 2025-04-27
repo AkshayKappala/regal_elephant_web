@@ -4,6 +4,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.cartItems = {};
 
+    // Initialize active orders count badge
+    function initializeOrdersBadge() {
+        const orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
+        if (orderHistory.length > 0) {
+            // Fetch order details to check active orders
+            Promise.all(orderHistory.map(orderId => 
+                fetch(`api/get_order_details.php?order_id=${orderId}`)
+                    .then(response => response.json())
+                    .catch(error => ({ success: false }))
+            ))
+            .then(results => {
+                // Filter successful responses and active orders
+                const activeOrders = results
+                    .filter(data => data.success)
+                    .map(data => data.order)
+                    .filter(order => 
+                        order.status !== 'archived' && 
+                        order.status !== 'cancelled' && 
+                        order.status !== 'picked up'
+                    );
+                
+                // Update badge if there are active orders
+                if (activeOrders.length > 0) {
+                    const ordersNavLink = document.querySelector('a.nav-link[data-page="orders"]');
+                    if (ordersNavLink) {
+                        let ordersBadge = document.getElementById('orders-count-badge');
+                        if (!ordersBadge) {
+                            ordersBadge = document.createElement('span');
+                            ordersBadge.id = 'orders-count-badge';
+                            ordersBadge.className = 'position-absolute top-0 start-50 translate-middle-x badge rounded-pill bg-danger';
+                            ordersBadge.innerHTML = activeOrders.length + '<span class="visually-hidden">active orders</span>';
+                            ordersNavLink.style.position = 'relative';
+                            ordersNavLink.appendChild(ordersBadge);
+                        } else {
+                            ordersBadge.textContent = activeOrders.length;
+                        }
+                    }
+                }
+            });
+        }
+    }
+
     window.updateCartBadge = function() {
         const badge = document.getElementById('cart-count-badge');
         const goToCartBtn = document.getElementById('goToCartBtn');
@@ -204,6 +246,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.updateMenuQuantities();
                 attachQuantityWidgetListeners();
                 window.updateCartBadge();
+                
+                // Make sure orders badge is maintained when navigating between pages
+                if (page !== 'orders') {
+                    // When navigating to non-orders pages, make sure the badge persists
+                    setTimeout(() => initializeOrdersBadge(), 100);
+                }
 
                 setTimeout(() => {
                     if (page === 'menu') {
@@ -243,6 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             loadContent("home");
             window.updateCartBadge();
+            initializeOrdersBadge();
         })
         .catch((error) => {
             loadContent("home");

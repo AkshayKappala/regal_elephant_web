@@ -82,6 +82,24 @@ try {
     $stmt->close();
 
     $mysqli->commit();
+    
+    // Trigger an event for the new order
+    $status = 'preparing'; // Default status for new orders
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $eventEndpoint = "$protocol://$host/INFS730/regal_elephant_web/api/order_status_events.php?order_id=$order_id&status=" . urlencode($status);
+    
+    // Non-blocking request
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $eventEndpoint);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Short timeout - we don't care about the response
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_exec($ch);
+    curl_close($ch);
+    
     echo json_encode(['success' => true, 'order_id' => $order_id, 'order_number' => $order_number]);
 } catch (Exception $e) {
     $mysqli->rollback();
