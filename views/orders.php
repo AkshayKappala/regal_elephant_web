@@ -1,3 +1,33 @@
+<style>
+    /* Custom styling for order tabs */
+    #orders-tabs {
+        border-bottom: 2px solid #a04b25;
+    }
+    
+    #orders-tabs .nav-link {
+        font-family: "Fredoka", sans-serif;
+        color: #d4c3a2;
+        background-color: transparent;
+        border: none;
+        margin-bottom: -2px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    #orders-tabs .nav-link:hover {
+        color: #f5e7c8;
+        background-color: rgba(234, 218, 176, 0.1);
+    }
+    
+    #orders-tabs .nav-link.active {
+        color: #eadab0;
+        background-color: rgba(160, 75, 37, 0.3);
+        border-bottom: 3px solid #eadab0;
+    }
+</style>
+
 <div class="container py-4">
     <h1 class="text-center mb-4">Your Orders</h1>
     
