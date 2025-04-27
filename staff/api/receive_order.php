@@ -101,7 +101,8 @@ try {
     $mysqli->commit();
     
     // Trigger server-sent event for new order
-    $eventUrl = '../../api/order_status_events.php?order_id=' . $order_id . '&status=preparing';
+    // Use unified approach that works for both staff dashboard and customer
+    $eventUrl = '../../api/order_status_events.php?order_id=' . $order_id . '&status=preparing&event_type=new_order';
     $absolutePath = realpath(__DIR__ . '/' . $eventUrl);
     
     if (file_exists($absolutePath)) {
@@ -111,7 +112,7 @@ try {
         $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $path = explode('/staff', $_SERVER['REQUEST_URI'])[0] ?? '';
-        $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$order_id&status=preparing";
+        $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$order_id&status=preparing&event_type=new_order";
         
         // Non-blocking request
         $ch = curl_init();

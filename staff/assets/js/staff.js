@@ -1,5 +1,8 @@
 // Staff Portal JavaScript Functions
 
+// Track processed events to prevent duplicate notifications
+window.processedEvents = new Set();
+
 document.addEventListener('DOMContentLoaded', function() {
     // Automatically update order stats in dashboard
     refreshDashboardStats();
@@ -22,7 +25,8 @@ function initializeSSEConnection() {
         return;
     }
     
-    const sseEndpoint = '../api/order_events.php';
+    // Important: Add the client=staff parameter to identify this as a staff connection
+    const sseEndpoint = '../api/order_events.php?client=staff';
     const evtSource = new EventSource(sseEndpoint);
     
     evtSource.addEventListener('connection', function(event) {
@@ -44,15 +48,39 @@ function initializeSSEConnection() {
             // Handle new preparing orders (new orders)
             const newOrders = data.orders.filter(order => order.status === 'preparing');
             if (newOrders.length > 0) {
-                // Show notification only
-                showAlert(`${newOrders.length} new order(s) received!`, 'info');
+                // Process each new order, tracking which ones we've seen
+                newOrders.forEach(order => {
+                    // Create a unique ID for this order
+                    const orderUniqueId = `new_order_${order.order_id}`;
+                    
+                    // Skip if we've already processed this order
+                    if (window.processedEvents.has(orderUniqueId)) {
+                        console.log(`Skipping already processed order: ${orderUniqueId}`);
+                        return;
+                    }
+                    
+                    // Mark this order as processed
+                    window.processedEvents.add(orderUniqueId);
+                });
                 
-                // DIRECT UPDATE: Add the new orders to the dashboard recent orders table
-                updateDashboardOrders(newOrders);
+                // Only show notification and update UI if we have unprocessed orders
+                const unprocessedOrders = newOrders.filter(order => {
+                    return window.processedEvents.has(`new_order_${order.order_id}`);
+                });
                 
-                // Update orders table if on orders page
-                if (document.getElementById('orders-table')) {
-                    updateOrdersTableWithNewOrders(newOrders);
+                if (unprocessedOrders.length > 0) {
+                    // Show notification
+                    showAlert(`${unprocessedOrders.length} new order(s) received!`, 'info');
+                    
+                    // Update dashboard recent orders if on dashboard page
+                    if (document.querySelector('.orders-table')) {
+                        updateDashboardOrders(newOrders);
+                    }
+                    
+                    // Update orders table if on orders page
+                    if (document.getElementById('orders-table')) {
+                        updateOrdersTableWithNewOrders(newOrders);
+                    }
                 }
             }
             
@@ -60,7 +88,7 @@ function initializeSSEConnection() {
             const otherOrders = data.orders.filter(order => order.status !== 'preparing');
             if (otherOrders.length > 0) {
                 // Update dashboard if we're on that page
-                if (document.getElementById('dashboard-stats')) {
+                if (document.querySelector('.orders-table')) {
                     updateDashboardOrders(otherOrders);
                 }
                 
@@ -69,6 +97,101 @@ function initializeSSEConnection() {
                     updateOrdersTableWithNewOrders(otherOrders);
                 }
             }
+        }
+    });
+    
+    evtSource.addEventListener('events_update', function(event) {
+        const data = JSON.parse(event.data);
+        console.log('Events update received:', data);
+        
+        if (data.events && data.events.length > 0) {
+            // Process each event
+            data.events.forEach(event => {
+                // Create a unique ID for this event to track if we've processed it before
+                const eventUniqueId = `${event.event_type}_${event.event_id}`;
+                
+                // Skip if we've already processed this event
+                if (window.processedEvents.has(eventUniqueId)) {
+                    console.log(`Skipping already processed event: ${eventUniqueId}`);
+                    return;
+                }
+                
+                // Mark this event as processed
+                window.processedEvents.add(eventUniqueId);
+                
+                // Limit the size of the processed events set to prevent memory issues
+                if (window.processedEvents.size > 200) {
+                    // Convert to array, remove oldest entries, and convert back to Set
+                    const eventsArray = Array.from(window.processedEvents);
+                    window.processedEvents = new Set(eventsArray.slice(-100));
+                }
+                
+                const eventData = JSON.parse(event.event_data);
+                
+                // If this is a new order event, refresh the dashboard
+                if (event.event_type === 'new_order') {
+                    if (document.getElementById('dashboard-stats')) {
+                        updateOrderStats(true);
+                    }
+                    
+                    if (document.querySelector('.orders-table')) {
+                        // Fetch the latest orders to update the dashboard
+                        fetch('api/get_orders_list.php?limit=5')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    refreshDashboardOrders(data.orders);
+                                }
+                            })
+                            .catch(error => console.error('Error fetching orders:', error));
+                    }
+                    
+                    if (document.getElementById('orders-table')) {
+                        refreshOrdersTable();
+                    }
+                    
+                    // Show a notification
+                    showAlert('New order received!', 'info');
+                }
+                
+                // If this is a status change, update the UI as needed
+                if (event.event_type === 'status_change') {
+                    const orderId = eventData.order_id;
+                    const newStatus = eventData.status;
+                    
+                    // Update status in dashboard table if it exists
+                    const dashboardRow = document.querySelector(`.orders-table tr[data-order-id="${orderId}"]`);
+                    if (dashboardRow) {
+                        const statusBadge = dashboardRow.querySelector('.badge');
+                        if (statusBadge) {
+                            statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                            statusBadge.className = `badge badge-${newStatus.replace(' ', '-')}`;
+                        }
+                    }
+                    
+                    // Update status in orders table if it exists
+                    const ordersRow = document.querySelector(`#orders-table tr[data-order-id="${orderId}"]`);
+                    if (ordersRow) {
+                        const statusBadge = ordersRow.querySelector('.badge');
+                        if (statusBadge) {
+                            statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                            statusBadge.className = `badge badge-${newStatus.replace(' ', '-')}`;
+                        }
+                    }
+                    
+                    // Update order details page if we're viewing this order
+                    const statusSelect = document.getElementById('order-status-select');
+                    if (statusSelect && statusSelect.getAttribute('data-order-id') == orderId) {
+                        statusSelect.value = newStatus;
+                        
+                        const statusBadge = document.getElementById('status-badge');
+                        if (statusBadge) {
+                            statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                            statusBadge.className = `badge badge-${newStatus.replace(' ', '-')}`;
+                        }
+                    }
+                }
+            });
         }
     });
     
@@ -87,8 +210,8 @@ function initializeSSEConnection() {
                     statusBadge.textContent = data.order.status.charAt(0).toUpperCase() + data.order.status.slice(1);
                     
                     // Remove all badge classes and add the appropriate one
-                    statusBadge.classList.remove('badge-preparing', 'badge-ready', 'badge-picked-up', 'badge-cancelled', 'badge-archived');
-                    statusBadge.classList.add(`badge-${data.order.status.replace(' ', '-')}`);
+                    statusBadge.className = '';
+                    statusBadge.classList.add('badge', `badge-${data.order.status.replace(' ', '-')}`);
                 }
                 
                 // Show a notification

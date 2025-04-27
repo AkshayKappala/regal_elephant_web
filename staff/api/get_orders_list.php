@@ -17,16 +17,17 @@ $limit = isset($_GET['limit']) ? min(50, max(5, intval($_GET['limit']))) : 20;
 try {
     $mysqli = Database::getConnection();
     
-    // Get total count for pagination
-    $countQuery = "SELECT COUNT(*) as total FROM orders";
+    // Get total count for pagination - exclude archived orders
+    $countQuery = "SELECT COUNT(*) as total FROM orders WHERE status != 'archived'";
     $totalResult = $mysqli->query($countQuery)->fetch_assoc();
     $total = $totalResult['total'];
     $totalPages = ceil($total / $limit);
     
-    // Get orders with pagination - no filtering
+    // Get orders with pagination - filter out archived orders
     $query = "SELECT o.*, 
              (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) as item_count 
              FROM orders o 
+             WHERE o.status != 'archived' 
              ORDER BY o.order_placed_time DESC 
              LIMIT ? OFFSET ?";
     
