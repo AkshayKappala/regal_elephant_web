@@ -1,7 +1,6 @@
 window.renderCart = function() {
     window.cartItems = window.cartItems || {};
 
-    console.log('renderCart (cart.js) called. window.cartItems:', JSON.stringify(window.cartItems));
     const cartDisplay = document.getElementById('cart-items-display');
     const cartSummary = document.getElementById('cart-summary');
     const customerDetailsSection = document.getElementById('customer-details-section');
@@ -138,26 +137,22 @@ window.renderCart = function() {
     if (customerForm && !customerForm.dataset.submitListenerAttached) {
         customerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            console.log('Place Order button clicked, submit event triggered.');
             const name = document.getElementById('customer-name').value;
             const mobile = document.getElementById('customer-mobile').value;
             const email = document.getElementById('customer-email').value;
             let tip = parseFloat(tipInput.value);
             if (isNaN(tip) || tip < 0) tip = 0;
             if (!name || !mobile) {
-                console.error('Validation failed: Name or Mobile missing.');
                 alert('Please enter your Name and Mobile Number.');
                 return;
             }
             localStorage.setItem('customer_details', JSON.stringify({ name, mobile, email }));
             
-            console.log('Form validation passed.');
             const cartItemsArr = Object.entries(window.cartItems).map(([key, item]) => ({
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity
             }));
-            console.log('Cart items prepared for ID lookup:', cartItemsArr);
             let itemIdData;
             try {
                 const itemIdResp = await fetch('api/get_item_ids.php', {
@@ -165,22 +160,17 @@ window.renderCart = function() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ items: cartItemsArr })
                 });
-                console.log('get_item_ids.php response status:', itemIdResp.status);
                 itemIdData = await itemIdResp.json();
-                console.log('get_item_ids.php response data:', itemIdData);
             } catch (error) {
-                console.error('Error fetching item IDs:', error);
                 alert('Error looking up item details. Please try again.');
                 return;
             }
             if (!itemIdData.success) {
-                console.error('Item ID lookup failed:', itemIdData.error);
                 alert('Could not process order: ' + (itemIdData.error || 'Item ID lookup failed.'));
                 return;
             }
             
             const cartItemsWithIds = itemIdData.items;
-            console.log('Cart items with IDs:', cartItemsWithIds);
             let subtotal = 0;
             cartItemsWithIds.forEach(item => { subtotal += item.price * item.quantity; });
             const tax = subtotal * taxRate;
@@ -192,26 +182,16 @@ window.renderCart = function() {
                 tip,
                 cartItems: cartItemsWithIds
             };
-            console.log('Placing order with payload:', orderPayload);
             
             let data;
             try {
-                console.log('Attempting to fetch API configuration...');
-                // Get API configuration from the dedicated endpoint
                 const configResp = await fetch('config/get_api_config.php');
-                if (!configResp.ok) {
-                    throw new Error(`Config fetch failed with status: ${configResp.status}`);
-                }
-                
                 const config = await configResp.json();
-                console.log('API config received:', config);
                 
                 if (!config.staff_api_url || !config.api_key) {
-                    throw new Error('Missing API configuration values');
+                    throw new Error('Missing API configuration');
                 }
                 
-                console.log('Sending order to staff API at:', config.staff_api_url + 'receive_order.php');
-                // Send order to staff API endpoint
                 const resp = await fetch(config.staff_api_url + 'receive_order.php', {
                     method: 'POST',
                     headers: { 
@@ -220,35 +200,24 @@ window.renderCart = function() {
                     },
                     body: JSON.stringify(orderPayload)
                 });
-                console.log('Staff API response status:', resp.status);
                 
-                // If we get an error status, read the text first to log it
                 if (!resp.ok) {
-                    const errorText = await resp.text();
-                    console.error('Error response from staff API:', errorText);
-                    throw new Error(`Staff API returned status ${resp.status}: ${errorText}`);
+                    throw new Error(`Staff API returned status ${resp.status}`);
                 }
                 
                 data = await resp.json();
-                console.log('Staff API response data:', data);
             } catch (error) {
-                console.error('Error placing order:', error);
                 alert('Error submitting order. Please try again.');
                 return;
             }
             
             if (data.success) {
-                console.log('Order placed successfully! Order ID:', data.order_id, 'Order Number:', data.order_number);
-
                 window.cartItems = {};
-                console.log('window.cartItems cleared:', JSON.stringify(window.cartItems));
 
                 if(typeof window.renderCart === 'function') {
-                    console.log('Calling renderCart to clear UI...');
                     window.renderCart();
                 }
                 if(typeof window.updateCartBadge === 'function') {
-                     console.log('Calling updateCartBadge...');
                     window.updateCartBadge();
                 }
 
@@ -263,15 +232,12 @@ window.renderCart = function() {
                 }
                 localStorage.setItem('order_history', JSON.stringify(orderHistory));
 
-                console.log('Redirecting to orders page...');
                 if (typeof window.loadContent === 'function') {
                     window.loadContent('orders');
                 } else {
-                    console.error('window.loadContent function not found, falling back to hash change.');
                     window.location.hash = '#orders';
                 }
             } else {
-                console.error('Order placement failed:', data.error);
                 alert('Order failed: ' + (data.error || 'Unknown error.'));
             }
         });

@@ -1,2 +1,7 @@
-# Allow proxy functionality to work
-# In a production environment, you might want to implement more specific access controls
+# API Access Controls
+# Allow the legacy API place_order.php to function as a proxy,
+# but add a note that it's deprecated and will be removed in the future
+
+# In a production environment, you might want to implement
+# more restrictive rules using RewriteRule, RewriteCond
+# and Authorization directives
