@@ -26,6 +26,25 @@
         background-color: rgba(160, 75, 37, 0.3);
         border-bottom: 3px solid #eadab0;
     }
+    
+    /* Custom styling for empty orders message */
+    .empty-orders-message {
+        background-color: rgba(234, 218, 176, 0.1);
+        border: 1px solid rgba(234, 218, 176, 0.3);
+        color: #eadab0;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.2rem;
+        margin: 2rem 0;
+    }
+    
+    .empty-orders-message i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
 </style>
 
 <div class="container py-4">
@@ -75,9 +94,9 @@
     function displayOrders() {
         if (!orderHistory || orderHistory.length === 0) {
             activeOrdersSection.innerHTML =
-                `<div class='col-12'><div class='alert alert-info text-center'>No active orders.</div></div>`;
+                `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-bag"></i>No active orders yet. Browse our menu to place an order.</div></div>`;
             orderHistorySection.innerHTML =
-                `<div class='col-12'><div class='alert alert-info text-center'>No order history.</div></div>`;
+                `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-clock-history"></i>No order history available.</div></div>`;
             return;
         }
 
@@ -121,13 +140,13 @@
             if (activeOrdersHtml.length > 0) {
                 activeOrdersSection.innerHTML = activeOrdersHtml.join('');
             } else {
-                activeOrdersSection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No active orders.</div></div>`;
+                activeOrdersSection.innerHTML = `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-bag"></i>No active orders yet. Browse our menu to place an order.</div></div>`;
             }
             
             if (orderHistoryHtml.length > 0) {
                 orderHistorySection.innerHTML = orderHistoryHtml.join('');
             } else {
-                orderHistorySection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No order history.</div></div>`;
+                orderHistorySection.innerHTML = `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-clock-history"></i>No order history available.</div></div>`;
             }
         } catch (error) {
             console.error('Error loading orders:', error);
@@ -316,11 +335,11 @@
         
         // Check if sections are empty and add messages if needed
         if (activeOrdersSection.children.length === 0) {
-            activeOrdersSection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No active orders.</div></div>`;
+            activeOrdersSection.innerHTML = `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-bag"></i>No active orders yet. Browse our menu to place an order.</div></div>`;
         }
         
         if (orderHistorySection.children.length === 0) {
-            orderHistorySection.innerHTML = `<div class='col-12'><div class='alert alert-info text-center'>No order history.</div></div>`;
+            orderHistorySection.innerHTML = `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-clock-history"></i>No order history available.</div></div>`;
         }
     }
 
