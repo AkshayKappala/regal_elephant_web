@@ -12,42 +12,7 @@ function emitOrderEvent($orderId, $status, $eventType = 'status_change') {
         'timestamp' => time()
     ];
     
-    // Store the event in the events table
-    try {
-        $mysqli = Database::getConnection();
-        $query = "INSERT INTO order_events (order_id, event_type, event_data) VALUES (?, ?, ?)";
-        $stmt = $mysqli->prepare($query);
-        $eventJson = json_encode($eventData);
-        $stmt->bind_param('iss', $orderId, $eventType, $eventJson);
-        $stmt->execute();
-    } catch (Exception $e) {
-        // If table doesn't exist yet, create it
-        if (strpos($e->getMessage(), "doesn't exist") !== false) {
-            try {
-                $createTable = "CREATE TABLE order_events (
-                    event_id INT AUTO_INCREMENT PRIMARY KEY,
-                    order_id INT NOT NULL,
-                    event_type VARCHAR(50) NOT NULL,
-                    event_data TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    INDEX (order_id),
-                    INDEX (event_type)
-                )";
-                $mysqli->query($createTable);
-                
-                // Try again after creating the table
-                $query = "INSERT INTO order_events (order_id, event_type, event_data) VALUES (?, ?, ?)";
-                $stmt = $mysqli->prepare($query);
-                $stmt->bind_param('iss', $orderId, $eventType, $eventJson);
-                $stmt->execute();
-            } catch (Exception $innerEx) {
-                // Failed to create table or insert, fall back to file-based approach
-                error_log("Database error: " . $innerEx->getMessage());
-            }
-        }
-    }
-    
-    // Also write to a file as a fallback mechanism
+    // Store the event directly in the file system
     $eventsDir = __DIR__ . '/../temp/events';
     if (!is_dir($eventsDir)) {
         mkdir($eventsDir, 0755, true);
@@ -63,7 +28,8 @@ function emitOrderEvent($orderId, $status, $eventType = 'status_change') {
         }
     }
     
-    // Add new event
+    // Add new event with a unique ID
+    $eventData['event_id'] = count($events) > 0 ? max(array_column($events, 'event_id')) + 1 : 1;
     $events[] = $eventData;
     
     // Keep only last 100 events
@@ -71,9 +37,128 @@ function emitOrderEvent($orderId, $status, $eventType = 'status_change') {
         $events = array_slice($events, -100);
     }
     
+    // Write events to file
     file_put_contents($eventFile, json_encode($events));
     
+    // Create order detail cache file
+    createOrderDetailCache($orderId, $status);
+    
     return $eventData;
+}
+
+// Function to create/update order detail cache file
+function createOrderDetailCache($orderId, $newStatus) {
+    $orderCacheDir = __DIR__ . '/../temp/events/orders/';
+    if (!is_dir($orderCacheDir)) {
+        mkdir($orderCacheDir, 0755, true);
+    }
+    
+    $orderCacheFile = $orderCacheDir . 'order_' . $orderId . '.json';
+    
+    try {
+        // Get order details from database
+        $mysqli = Database::getConnection();
+        
+        $query = "SELECT o.*, 
+                    GROUP_CONCAT(oi.item_id, ':', oi.quantity, ':', oi.price_each SEPARATOR '|') as items,
+                    c.name as customer_name, c.email as customer_email 
+                FROM orders o 
+                LEFT JOIN order_items oi ON o.order_id = oi.order_id 
+                LEFT JOIN customers c ON o.customer_id = c.customer_id
+                WHERE o.order_id = ? 
+                GROUP BY o.order_id";
+                
+        $stmt = $mysqli->prepare($query);
+        $stmt->bind_param('i', $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            // Make sure status is updated to the latest one
+            $row['status'] = $newStatus;
+            
+            // Format items as array
+            $items = [];
+            if (!empty($row['items'])) {
+                $itemsData = explode('|', $row['items']);
+                foreach ($itemsData as $item) {
+                    $itemParts = explode(':', $item);
+                    if (count($itemParts) >= 3) {
+                        // Get the item name from the database
+                        $itemQuery = "SELECT name FROM menu_items WHERE item_id = ?";
+                        $itemStmt = $mysqli->prepare($itemQuery);
+                        $itemStmt->bind_param('i', $itemParts[0]);
+                        $itemStmt->execute();
+                        $itemResult = $itemStmt->get_result();
+                        $itemName = ($itemRow = $itemResult->fetch_assoc()) ? $itemRow['name'] : 'Unknown Item';
+                        
+                        $items[] = [
+                            'item_id' => $itemParts[0],
+                            'name' => $itemName,
+                            'quantity' => $itemParts[1],
+                            'price_each' => $itemParts[2],
+                            'subtotal' => floatval($itemParts[1]) * floatval($itemParts[2])
+                        ];
+                        
+                        $itemStmt->close();
+                    }
+                }
+            }
+            $row['items'] = $items;
+            
+            // Calculate total
+            $total = 0;
+            foreach ($items as $item) {
+                $total += $item['subtotal'];
+            }
+            $row['total'] = $total;
+            
+            // Format date
+            if (isset($row['created_at'])) {
+                $row['formatted_date'] = date('M j, Y g:i A', strtotime($row['created_at']));
+            }
+            
+            // Add status text for display
+            $statusMap = [
+                'pending' => 'Pending',
+                'in_progress' => 'In Progress',
+                'ready' => 'Ready for Pickup',
+                'completed' => 'Completed',
+                'cancelled' => 'Cancelled'
+            ];
+            $row['status_text'] = $statusMap[$newStatus] ?? ucfirst($newStatus);
+            
+            // Write to cache file
+            file_put_contents($orderCacheFile, json_encode($row));
+            
+            // Debug log
+            error_log("Order cache updated for order #$orderId with status $newStatus");
+        } else {
+            error_log("Error: Order #$orderId not found in database");
+            // Create a minimal cache file if we can't find the order
+            $minimalData = [
+                'order_id' => $orderId,
+                'status' => $newStatus,
+                'status_text' => ucfirst($newStatus),
+                'timestamp' => time(),
+                'items' => []
+            ];
+            file_put_contents($orderCacheFile, json_encode($minimalData));
+        }
+        
+        $stmt->close();
+    } catch (Exception $e) {
+        error_log("Error creating order cache file: " . $e->getMessage());
+        // Create a minimal cache file in case of database errors
+        $minimalData = [
+            'order_id' => $orderId,
+            'status' => $newStatus,
+            'status_text' => ucfirst($newStatus),
+            'timestamp' => time(),
+            'error' => 'Failed to load order details'
+        ];
+        file_put_contents($orderCacheFile, json_encode($minimalData));
+    }
 }
 
 // Get the order ID and status from request

@@ -16,6 +16,9 @@ export function loadContent(page, anchorTarget = null) {
     let goToTopBtn = null;
     const goToCartBtn = document.getElementById('goToCartBtn');
     
+    // Show loading indicator immediately
+    contentDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
     if (goToCartBtn) {
         goToCartBtn.classList.remove('show');
     }
@@ -44,45 +47,39 @@ export function loadContent(page, anchorTarget = null) {
 
             // Handle cart rendering if on cart page
             if (page === 'cart') {
-                setTimeout(() => {
-                    if (typeof window.renderCart === 'function') {
-                        window.renderCart();
-                    }
-                }, 0);
+                // Render cart immediately with no delay
+                if (typeof window.renderCart === 'function') {
+                    window.renderCart();
+                }
             }
 
             updateMenuQuantities(contentDiv, window.cartItems);
             attachQuantityWidgetListeners(contentDiv, window.cartItems);
             updateCartBadge();
             
-            // Make sure orders badge is maintained when navigating
+            // Make sure orders badge is maintained when navigating - no delay needed
             if (page !== 'orders') {
-                setTimeout(() => initializeOrdersBadge(), 100);
+                initializeOrdersBadge();
             }
 
-            // Add scroll listener for menu page
-            setTimeout(() => {
-                if (page === 'menu') {
-                    goToTopBtn = document.getElementById('goToTopBtn');
-                    if (goToTopBtn) {
-                        addScrollListener();
-                    }
+            // Add scroll listener for menu page - no delay needed
+            if (page === 'menu') {
+                goToTopBtn = document.getElementById('goToTopBtn');
+                if (goToTopBtn) {
+                    addScrollListener();
                 }
-                updateCartBadge();
-            }, 50);
+            }
 
             // Scroll to anchor target if specified
             if (anchorTarget) {
-                setTimeout(() => {
-                    const element = document.getElementById(anchorTarget);
-                    if (element) {
-                        element.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }
-                }, 150);
+                const element = document.getElementById(anchorTarget);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
             }
         })
         .catch((error) => {
-            contentDiv.innerHTML = "<p>Error loading content.</p>";
+            contentDiv.innerHTML = "<div class='alert alert-danger'>Error loading content. Please try again.</div>";
             console.error("Error loading page:", error);
         });
 }

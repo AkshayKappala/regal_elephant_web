@@ -30,6 +30,18 @@ if (!in_array($status, $validStatuses)) {
     exit;
 }
 
+// Map staff status to customer-facing status for the event system
+$statusMapping = [
+    'preparing' => 'in_progress',
+    'ready' => 'ready',
+    'picked up' => 'completed',
+    'cancelled' => 'cancelled',
+    'archived' => 'archived'
+];
+
+// Get the mapped status for events
+$eventStatus = isset($statusMapping[$status]) ? $statusMapping[$status] : $status;
+
 try {
     $mysqli = Database::getConnection();
     
@@ -47,19 +59,20 @@ try {
             $pickupStmt->execute();
         }
         
-        // Trigger the event emission for real-time updates
-        $eventUrl = '../../api/order_status_events.php?order_id=' . $orderId . '&status=' . urlencode($status);
-        $absolutePath = realpath(__DIR__ . '/' . $eventUrl);
+        // Trigger the event emission for real-time updates with properly mapped status
+        $eventFilePath = __DIR__ . '/../../api/order_status_events.php';
         
-        if (file_exists($absolutePath)) {
-            // Method 1: Include the file directly (synchronous)
-            include_once $absolutePath;
+        if (file_exists($eventFilePath)) {
+            // Method 1: Include the file directly with the necessary parameters
+            $_GET['order_id'] = $orderId;
+            $_GET['status'] = $eventStatus;
+            include_once $eventFilePath;
         } else {
             // Method 2: Make an asynchronous HTTP request (if on the same server)
             $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
             $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
             $path = explode('/staff', $_SERVER['REQUEST_URI'])[0] ?? '';
-            $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$orderId&status=" . urlencode($status);
+            $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$orderId&status=" . urlencode($eventStatus);
             
             // Non-blocking request
             $ch = curl_init();

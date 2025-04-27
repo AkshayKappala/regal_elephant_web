@@ -121,16 +121,34 @@ function loadAllOrders() {
     const activeOrdersContainer = document.getElementById('active-orders-container');
     const archivedOrdersContainer = document.getElementById('archived-orders-container');
     
-    // Show loader on first load only
-    if (allOrders.length === 0) {
-        if (ordersLoader) ordersLoader.style.display = 'block';
-        if (activeOrdersContainer) activeOrdersContainer.style.display = 'none';
-        if (archivedOrdersContainer) archivedOrdersContainer.style.display = 'none';
+    // Show loader immediately
+    if (ordersLoader) ordersLoader.style.display = 'block';
+    
+    // Show containers with loading indicators in their tables
+    if (activeOrdersContainer) {
+        activeOrdersContainer.style.display = 'block';
+        const activeTableBody = document.querySelector('#active-orders-table tbody');
+        if (activeTableBody) {
+            activeTableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading active orders...</td></tr>';
+        }
     }
     
-    // Fetch all orders from the database
-    fetch('api/get_orders_list.php?limit=500')
-        .then(response => response.json())
+    if (archivedOrdersContainer) {
+        archivedOrdersContainer.style.display = 'block';
+        const archivedTableBody = document.querySelector('#archived-orders-table tbody');
+        if (archivedTableBody) {
+            archivedTableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading archived orders...</td></tr>';
+        }
+    }
+    
+    // Fetch all orders from the database with cache busting
+    fetch(`api/get_orders_list.php?limit=500&_nocache=${Date.now()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 // Store orders globally
@@ -139,19 +157,32 @@ function loadAllOrders() {
                 // Update the tables
                 updateOrdersTables();
                 
-                // Hide loader, show tables
+                // Hide loader
                 if (ordersLoader) ordersLoader.style.display = 'none';
-                if (activeOrdersContainer) activeOrdersContainer.style.display = 'block';
-                if (archivedOrdersContainer) archivedOrdersContainer.style.display = 'block';
+            } else {
+                throw new Error(data.error || 'Failed to load orders');
             }
         })
         .catch(error => {
             console.error('Error fetching orders:', error);
             
-            // Hide loader, show tables (even on error)
+            // Show error message in tables
+            if (activeOrdersContainer) {
+                const activeTableBody = document.querySelector('#active-orders-table tbody');
+                if (activeTableBody) {
+                    activeTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load orders. Please try refreshing the page.</td></tr>';
+                }
+            }
+            
+            if (archivedOrdersContainer) {
+                const archivedTableBody = document.querySelector('#archived-orders-table tbody');
+                if (archivedTableBody) {
+                    archivedTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load orders. Please try refreshing the page.</td></tr>';
+                }
+            }
+            
+            // Hide loader
             if (ordersLoader) ordersLoader.style.display = 'none';
-            if (activeOrdersContainer) activeOrdersContainer.style.display = 'block';
-            if (archivedOrdersContainer) archivedOrdersContainer.style.display = 'block';
         });
 }
 

@@ -280,6 +280,8 @@ export function updateOrdersTable(orders) {
     const ordersTableBody = document.querySelector('#orders-table tbody');
     if (!ordersTableBody) return;
 
+    console.log("Updating orders table with", orders.length, "orders");
+
     // Clear existing rows
     ordersTableBody.innerHTML = '';
 

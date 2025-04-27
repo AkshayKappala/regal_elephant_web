@@ -79,7 +79,9 @@
         </div>
     </div>
 </div>
-<script>
+<script type="module">
+import { addOrderEventListener } from './assets/src/events.js';
+
 (async function() {
     const activeOrdersSection = document.getElementById('active-orders-section');
     const orderHistorySection = document.getElementById('order-history-section');
@@ -160,7 +162,8 @@
     // Function to fetch and render a single order
     async function renderOrder(orderId) {
         try {
-            const response = await fetch(`api/get_order_details.php?order_id=${orderId}`);
+            console.log(`Fetching details for order ${orderId}`);
+            const response = await fetch(`api/get_order_details.php?order_id=${orderId}&_nocache=${Date.now()}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -175,6 +178,7 @@
             }
 
             const order = data.order;
+            console.log(`Received order ${orderId} with status: ${order.status}`);
             
             let itemsHtml = '';
             order.items.forEach(item => {
@@ -200,7 +204,7 @@
             // Return the HTML string for this order card and its status
             return {
                 html: `
-                <div class='col-md-8' data-order-id="${order.order_id}" data-order-status="${order.status}">
+                <div class='col-md-8 order-card' data-order-id="${order.order_id}" data-order-status="${order.status}">
                     <div class='card menu-item-card order-confirmation-card shadow mb-4'>
                         <div class='card-header order-card-header'>
                             <h4 class='mb-0 menu-item-name'>Order Confirmation</h4>
@@ -242,26 +246,39 @@
         }
     }
 
-    // Function to update an existing order card or add a new one
+    // This function updates an order card when its status changes
     function updateOrderCard(order) {
-        // Function to check if the order belongs in active or history
-        function isActiveOrder(status) {
-            return activeStatuses.includes(status.toLowerCase());
+        if (!order || !order.order_id) return;
+        
+        const orderId = order.order_id;
+        // Try both selectors to ensure we find the card
+        let existingCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+        if (!existingCard) {
+            existingCard = document.querySelector(`div[data-order-id="${orderId}"]`);
         }
         
-        // Get the current status of the order
-        const currentStatus = order.status.toLowerCase();
+        const newStatus = order.status || 'unknown';
         
-        // Check if this order is in our history
-        if (!orderHistory.includes(order.order_id)) {
-            // This is a new order, add it to history
-            orderHistory.push(order.order_id);
-            localStorage.setItem('order_history', JSON.stringify(orderHistory));
+        console.log(`Updating order ${orderId} status to ${newStatus}, card exists: ${!!existingCard}`);
+        
+        // Only force reload if the status has actually changed
+        // This prevents constant reloading of cards
+        if (existingCard) {
+            const currentStatus = existingCard.getAttribute('data-order-status');
+            if (currentStatus === newStatus) {
+                console.log(`Order ${orderId} already has status ${newStatus}, skipping update`);
+                return; // Skip update if status hasn't changed
+            }
             
-            // Render and insert the new order
-            renderOrder(order.order_id).then(result => {
+            console.log(`Status changed from ${currentStatus} to ${newStatus}, updating card`);
+        }
+        
+        // If the card doesn't exist, we need to add it
+        if (!existingCard) {
+            // Fetch the full order details and render it with cache-busting
+            renderOrder(orderId).then(result => {
                 if (result.html) {
-                    const targetSection = isActiveOrder(currentStatus) ? activeOrdersSection : orderHistorySection;
+                    const targetSection = isActiveOrder(newStatus) ? activeOrdersSection : orderHistorySection;
                     
                     // Add to the top of the list
                     if (targetSection.firstChild) {
@@ -270,121 +287,146 @@
                         targetSection.innerHTML = result.html;
                     }
                     
-                    // Replace empty list message if it exists
-                    const emptyMessage = targetSection.querySelector('.alert.alert-info');
+                    // Replace empty message if it exists
+                    const emptyMessage = targetSection.querySelector('.empty-orders-message');
                     if (emptyMessage) {
-                        emptyMessage.remove();
+                        emptyMessage.closest('.col-12').remove();
                     }
+                    
+                    // Add the order to local history if it doesn't exist
+                    if (!orderHistory.includes(orderId)) {
+                        orderHistory.push(orderId);
+                        localStorage.setItem('order_history', JSON.stringify(orderHistory));
+                    }
+                    
+                    console.log(`New order card added to the ${isActiveOrder(newStatus) ? 'active' : 'history'} section`);
                 }
             });
-        } else {
-            // Find the existing card
-            const existingCard = document.querySelector(`[data-order-id="${order.order_id}"]`);
-            if (existingCard) {
-                const oldStatus = existingCard.getAttribute('data-order-status').toLowerCase();
-                const newStatus = order.status.toLowerCase();
+            return;
+        }
+        
+        // If card exists and status changed, update it
+        const currentStatus = existingCard.getAttribute('data-order-status');
+        
+        if (currentStatus !== newStatus) {
+            console.log(`Status changed from ${currentStatus} to ${newStatus}`);
+            
+            // Update status in localStorage
+            if (typeof window.updateOrderStatus === 'function') {
+                window.updateOrderStatus(orderId, newStatus);
+            }
+            
+            // Check if we need to move the card to a different section
+            const isCurrentActive = isActiveOrder(currentStatus);
+            const isNewActive = isActiveOrder(newStatus);
+            
+            if (isCurrentActive !== isNewActive) {
+                // Remove card from current section
+                existingCard.remove();
                 
-                // Check if the order is moving between tabs
-                if (isActiveOrder(oldStatus) !== isActiveOrder(newStatus)) {
-                    // Need to move the card to a different tab
-                    existingCard.remove();
-                    
-                    // Re-render the order in the new section
-                    renderOrder(order.order_id).then(result => {
-                        if (result.html) {
-                            const targetSection = isActiveOrder(newStatus) ? activeOrdersSection : orderHistorySection;
-                            
-                            // Add to the top of the list
-                            if (targetSection.firstChild) {
-                                targetSection.insertAdjacentHTML('afterbegin', result.html);
-                            } else {
-                                targetSection.innerHTML = result.html;
-                            }
-                            
-                            // Replace empty list message if it exists
-                            const emptyMessage = targetSection.querySelector('.alert.alert-info');
-                            if (emptyMessage) {
-                                emptyMessage.remove();
-                            }
-                        }
-                    });
-                } else {
-                    // Just update the status badge
-                    const statusBadge = existingCard.querySelector('.order-status');
-                    if (statusBadge) {
-                        statusBadge.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
-                        existingCard.setAttribute('data-order-status', order.status);
+                // Re-render the order in the new section
+                renderOrder(orderId).then(result => {
+                    if (result.html) {
+                        const targetSection = isNewActive ? activeOrdersSection : orderHistorySection;
                         
-                        // Update badge color based on status
-                        statusBadge.className = 'badge order-status';
-                        if (order.status === 'preparing') {
-                            statusBadge.classList.add('bg-warning', 'text-dark');
-                        } else if (order.status === 'ready') {
-                            statusBadge.classList.add('bg-success', 'text-white');
-                        } else if (order.status === 'picked up') {
-                            statusBadge.classList.add('bg-primary', 'text-white');
-                        } else if (order.status === 'cancelled') {
-                            statusBadge.classList.add('bg-danger', 'text-white');
-                        } else if (order.status === 'archived') {
-                            statusBadge.classList.add('bg-secondary', 'text-white');
+                        // Add to the top of the list
+                        if (targetSection.firstChild) {
+                            targetSection.insertAdjacentHTML('afterbegin', result.html);
+                        } else {
+                            targetSection.innerHTML = result.html;
                         }
+                        
+                        // Replace empty list message if it exists
+                        const emptyMessage = targetSection.querySelector('.empty-orders-message');
+                        if (emptyMessage) {
+                            emptyMessage.closest('.col-12').remove();
+                        }
+                        
+                        console.log(`Order card moved to the ${isNewActive ? 'active' : 'history'} section`);
                     }
+                });
+            } else {
+                // Just update the status badge
+                const statusBadge = existingCard.querySelector('.order-status');
+                if (statusBadge) {
+                    statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                    existingCard.setAttribute('data-order-status', newStatus);
+                    
+                    // Update badge color based on status
+                    statusBadge.className = 'badge order-status';
+                    if (newStatus === 'preparing') {
+                        statusBadge.classList.add('bg-warning', 'text-dark');
+                    } else if (newStatus === 'ready') {
+                        statusBadge.classList.add('bg-success', 'text-white');
+                    } else if (newStatus === 'picked up') {
+                        statusBadge.classList.add('bg-primary', 'text-white');
+                    } else if (newStatus === 'cancelled') {
+                        statusBadge.classList.add('bg-danger', 'text-white');
+                    } else if (newStatus === 'archived') {
+                        statusBadge.classList.add('bg-secondary', 'text-white');
+                    }
+                    
+                    console.log(`Order status badge updated to ${newStatus}`);
+                } else {
+                    console.error(`Status badge not found for order ${orderId}`);
                 }
             }
         }
-        
-        // Check if sections are empty and add messages if needed
-        if (activeOrdersSection.children.length === 0) {
-            activeOrdersSection.innerHTML = `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-bag"></i>No active orders yet. Browse our menu to place an order.</div></div>`;
-        }
-        
-        if (orderHistorySection.children.length === 0) {
-            orderHistorySection.innerHTML = `<div class='col-12'><div class='empty-orders-message'><i class="bi bi-clock-history"></i>No order history available.</div></div>`;
-        }
+    }
+    
+    // Helper function to check if a status is considered active
+    function isActiveOrder(status) {
+        return activeStatuses.includes(status) && !historyStatuses.includes(status);
     }
 
-    // Subscribe to server-sent events for real-time updates
-    function subscribeToOrderEvents() {
-        const eventSource = new EventSource('api/order_events.php');
-        
-        eventSource.addEventListener('connection', function(e) {
-            console.log('SSE connection established');
-        });
-        
-        eventSource.addEventListener('new_orders', function(e) {
-            const data = JSON.parse(e.data);
-            if (data.orders && data.orders.length > 0) {
-                data.orders.forEach(order => {
-                    updateOrderCard(order);
-                });
+    // Register event listeners for order events
+    addOrderEventListener('order_update', function(data) {
+        if (data.order) {
+            console.log('Received order_update event with data:', data.order);
+            updateOrderCard(data.order);
+            // Update the orders badge in the navbar
+            if (typeof window.initializeOrdersBadge === 'function') {
+                window.initializeOrdersBadge();
             }
-        });
-        
-        eventSource.addEventListener('order_update', function(e) {
-            const data = JSON.parse(e.data);
-            if (data.order) {
-                updateOrderCard(data.order);
+        }
+    });
+    
+    addOrderEventListener('new_orders', function(data) {
+        if (data.orders && data.orders.length > 0) {
+            console.log('Received new_orders event with data:', data.orders);
+            data.orders.forEach(order => {
+                updateOrderCard(order);
+            });
+            // Update the orders badge in the navbar
+            if (typeof window.initializeOrdersBadge === 'function') {
+                window.initializeOrdersBadge();
             }
-        });
-        
-        eventSource.addEventListener('error', function(e) {
-            console.error('SSE connection error:', e);
-            // Try to reconnect after a delay
-            setTimeout(function() {
-                subscribeToOrderEvents();
-            }, 5000);
-        });
-        
-        // Clean up function to close the connection when navigating away
-        window.addEventListener('beforeunload', function() {
-            eventSource.close();
-        });
-    }
+        }
+    });
 
     // Initialize the orders display
     displayOrders();
     
-    // Start listening for updates
-    subscribeToOrderEvents();
+    // Set up a periodic refresh to ensure we always have the latest order status
+    // This serves as a backup in case SSE fails
+    setInterval(() => {
+        if (orderHistory.length > 0) {
+            // Refresh each order one at a time to avoid overwhelming the server
+            orderHistory.forEach((orderId, index) => {
+                // Stagger the requests
+                setTimeout(() => {
+                    console.log(`Periodic refresh for order ${orderId}`);
+                    fetch(`api/get_order_details.php?order_id=${orderId}&_nocache=${Date.now()}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.order) {
+                                updateOrderCard(data.order);
+                            }
+                        })
+                        .catch(error => console.error(`Error refreshing order ${orderId}:`, error));
+                }, index * 500); // Stagger by 500ms per order
+            });
+        }
+    }, 15000); // Refresh every 15 seconds
 })();
 </script>

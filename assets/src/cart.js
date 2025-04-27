@@ -254,6 +254,11 @@ async function placeOrderHandler(event) {
         }
         localStorage.setItem('order_history', JSON.stringify(orderHistory));
 
+        // Update the orders notification badge immediately
+        if(typeof window.initializeOrdersBadge === 'function') {
+            window.initializeOrdersBadge();
+        }
+
         if (typeof window.loadContent === 'function') {
             window.loadContent('orders');
         } else {
