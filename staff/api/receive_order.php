@@ -1,10 +1,35 @@
 <?php
 header('Content-Type: application/json');
+// Add CORS headers to allow cross-origin requests
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-API-Key');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/api_config.php';
 
+// Improved header handling for different server environments
 $headers = getallheaders();
-$apiKey = isset($headers['X-API-Key']) ? $headers['X-API-Key'] : '';
+$apiKey = '';
+
+// Check in multiple ways since server configurations can be different
+if (isset($headers['X-API-Key'])) {
+    $apiKey = $headers['X-API-Key'];
+} elseif (isset($headers['x-api-key'])) {
+    $apiKey = $headers['x-api-key'];
+} elseif (isset($_SERVER['HTTP_X_API_KEY'])) {
+    $apiKey = $_SERVER['HTTP_X_API_KEY'];
+}
+
+// For debugging purposes - log the provided vs expected keys
+error_log("API Key provided: " . $apiKey);
+error_log("Expected API Key: " . API_KEY);
 
 if ($apiKey !== API_KEY) {
     error_log("receive_order.php: Unauthorized access attempt");

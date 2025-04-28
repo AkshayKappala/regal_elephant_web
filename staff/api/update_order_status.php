@@ -1,9 +1,21 @@
 <?php
 header('Content-Type: application/json');
+// Add CORS headers
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require_once __DIR__ . '/../../config/database.php';
 
 session_start();
 if (!isset($_SESSION['staff_logged_in']) || $_SESSION['staff_logged_in'] !== true) {
+    http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Unauthorized access']);
     exit;
 }
@@ -58,8 +70,15 @@ try {
             include_once $eventFilePath;
         } else {
             $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
-            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+            // Force HTTPS in production
+            $isProduction = (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'ondigitalocean.app') !== false);
+            $protocol = $isProduction ? 'https' : (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http');
+            
             $path = explode('/staff', $_SERVER['REQUEST_URI'])[0] ?? '';
+            // Ensure clean path structure with no double slashes
+            $path = trim($path, '/');
+            $path = $path ? '/' . $path : '';
+            
             $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$orderId&status=" . urlencode($eventStatus);
             
             $ch = curl_init();
