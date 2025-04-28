@@ -1,9 +1,7 @@
 <?php
-// filepath: c:\xampp\htdocs\INFS730\regal_elephant_web\api\order_status_events.php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 
-// Function to emit an order event to a log file that the SSE endpoint can read
 function emitOrderEvent($orderId, $status, $eventType = 'status_change') {
     $eventData = [
         'order_id' => $orderId,
@@ -12,7 +10,6 @@ function emitOrderEvent($orderId, $status, $eventType = 'status_change') {
         'timestamp' => time()
     ];
     
-    // Store the event directly in the file system
     $eventsDir = __DIR__ . '/../temp/events';
     if (!is_dir($eventsDir)) {
         mkdir($eventsDir, 0755, true);
@@ -28,25 +25,20 @@ function emitOrderEvent($orderId, $status, $eventType = 'status_change') {
         }
     }
     
-    // Add new event with a unique ID
     $eventData['event_id'] = count($events) > 0 ? max(array_column($events, 'event_id')) + 1 : 1;
     $events[] = $eventData;
     
-    // Keep only last 100 events
     if (count($events) > 100) {
         $events = array_slice($events, -100);
     }
     
-    // Write events to file
     file_put_contents($eventFile, json_encode($events));
     
-    // Create order detail cache file
     createOrderDetailCache($orderId, $status);
     
     return $eventData;
 }
 
-// Function to create/update order detail cache file
 function createOrderDetailCache($orderId, $newStatus) {
     $orderCacheDir = __DIR__ . '/../temp/events/orders/';
     if (!is_dir($orderCacheDir)) {
@@ -56,7 +48,6 @@ function createOrderDetailCache($orderId, $newStatus) {
     $orderCacheFile = $orderCacheDir . 'order_' . $orderId . '.json';
     
     try {
-        // Get order details from database
         $mysqli = Database::getConnection();
         
         $query = "SELECT o.*, 
@@ -74,17 +65,14 @@ function createOrderDetailCache($orderId, $newStatus) {
         $result = $stmt->get_result();
         
         if ($row = $result->fetch_assoc()) {
-            // Make sure status is updated to the latest one
             $row['status'] = $newStatus;
             
-            // Format items as array
             $items = [];
             if (!empty($row['items'])) {
                 $itemsData = explode('|', $row['items']);
                 foreach ($itemsData as $item) {
                     $itemParts = explode(':', $item);
                     if (count($itemParts) >= 3) {
-                        // Get the item name from the database
                         $itemQuery = "SELECT name FROM menu_items WHERE item_id = ?";
                         $itemStmt = $mysqli->prepare($itemQuery);
                         $itemStmt->bind_param('i', $itemParts[0]);
@@ -106,19 +94,16 @@ function createOrderDetailCache($orderId, $newStatus) {
             }
             $row['items'] = $items;
             
-            // Calculate total
             $total = 0;
             foreach ($items as $item) {
                 $total += $item['subtotal'];
             }
             $row['total'] = $total;
             
-            // Format date
             if (isset($row['created_at'])) {
                 $row['formatted_date'] = date('M j, Y g:i A', strtotime($row['created_at']));
             }
             
-            // Add status text for display
             $statusMap = [
                 'pending' => 'Pending',
                 'in_progress' => 'In Progress',
@@ -128,14 +113,11 @@ function createOrderDetailCache($orderId, $newStatus) {
             ];
             $row['status_text'] = $statusMap[$newStatus] ?? ucfirst($newStatus);
             
-            // Write to cache file
             file_put_contents($orderCacheFile, json_encode($row));
             
-            // Debug log
             error_log("Order cache updated for order #$orderId with status $newStatus");
         } else {
             error_log("Error: Order #$orderId not found in database");
-            // Create a minimal cache file if we can't find the order
             $minimalData = [
                 'order_id' => $orderId,
                 'status' => $newStatus,
@@ -149,7 +131,6 @@ function createOrderDetailCache($orderId, $newStatus) {
         $stmt->close();
     } catch (Exception $e) {
         error_log("Error creating order cache file: " . $e->getMessage());
-        // Create a minimal cache file in case of database errors
         $minimalData = [
             'order_id' => $orderId,
             'status' => $newStatus,
@@ -161,7 +142,6 @@ function createOrderDetailCache($orderId, $newStatus) {
     }
 }
 
-// Get the order ID and status from request
 $orderId = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 $status = isset($_GET['status']) ? $_GET['status'] : '';
 $eventType = isset($_GET['event_type']) ? $_GET['event_type'] : 'status_change';
