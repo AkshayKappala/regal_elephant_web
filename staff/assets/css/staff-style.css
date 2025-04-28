@@ -1,10 +1,8 @@
-/* Staff Portal Custom Styles */
 body {
     background-color: #f8f9fa;
     font-family: 'Arial', sans-serif;
 }
 
-/* Sidebar Styles */
 #sidebar {
     background-color: #003e43 !important;
     min-height: 100vh;
@@ -48,7 +46,6 @@ body {
     color: #fff;
 }
 
-/* Main Content Area */
 main {
     padding: 20px;
 }
@@ -60,7 +57,6 @@ main {
     border-bottom: 1px solid #dee2e6;
 }
 
-/* Card Styles */
 .card {
     border: none;
     border-radius: 8px;
@@ -75,7 +71,6 @@ main {
     font-weight: 600;
 }
 
-/* Button Styles */
 .btn-custom {
     background-color: #a04b25;
     color: #ffffff;
@@ -87,7 +82,6 @@ main {
     color: #eadab0;
 }
 
-/* Status Badges */
 .badge-preparing {
     background-color: #ffc107;
     color: #212529;
@@ -113,7 +107,6 @@ main {
     color: #fff;
 }
 
-/* Stat Boxes */
 .stat-box {
     border-radius: 8px;
     padding: 20px;
@@ -159,7 +152,6 @@ main {
     border-left: 5px solid #17a2b8;
 }
 
-/* Orders Table */
 .orders-table th {
     font-weight: 600;
     border-top: none;
@@ -170,7 +162,6 @@ main {
     font-size: 0.75rem;
 }
 
-/* Order Details Page */
 .order-details-header {
     background-color: #f8f9fa;
     padding: 20px;
@@ -191,7 +182,6 @@ main {
     max-width: 200px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 767.98px) {
     #sidebar {
         min-height: auto;

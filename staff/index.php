@@ -2,18 +2,14 @@
 session_start();
 require_once __DIR__ . '/../config/database.php';
 
-// Check if user is logged in, otherwise redirect to login
 if (!isset($_SESSION['staff_logged_in']) || $_SESSION['staff_logged_in'] !== true) {
-    // If the form was submitted, try to log in
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
-        // Simple hardcoded auth for demo (in production, use proper authentication)
         $validUsername = 'admin';
         $validPassword = 'elephant2025';
         
         if ($_POST['username'] === $validUsername && $_POST['password'] === $validPassword) {
             $_SESSION['staff_logged_in'] = true;
             $_SESSION['staff_username'] = $_POST['username'];
-            // Redirect to prevent form resubmission
             header('Location: index.php');
             exit;
         } else {
@@ -21,17 +17,15 @@ if (!isset($_SESSION['staff_logged_in']) || $_SESSION['staff_logged_in'] !== tru
         }
     }
     
-    // Show login form if not logged in
     include 'login.php';
     exit;
 }
 
-// User is logged in, show the main dashboard
-$page = isset($_GET['page']) ? $_GET['page'] : 'orders'; // Default to orders page
-$allowedPages = ['orders', 'order-details', 'settings', 'logout']; // Removed 'dashboard'
+$page = isset($_GET['page']) ? $_GET['page'] : 'orders';
+$allowedPages = ['orders', 'order-details', 'settings', 'logout'];
 
 if (!in_array($page, $allowedPages)) {
-    $page = 'orders'; // Fallback to orders page
+    $page = 'orders';
 }
 
 if ($page === 'logout') {
@@ -54,7 +48,6 @@ if ($page === 'logout') {
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
                 <div class="position-sticky pt-3">
                     <div class="staff-header mb-4 px-3">
@@ -84,7 +77,6 @@ if ($page === 'logout') {
                 </div>
             </nav>
 
-            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <?php include "pages/{$page}.php"; ?>
             </main>
@@ -92,7 +84,6 @@ if ($page === 'logout') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Load the main staff.js file as a module -->
     <script type="module" src="assets/js/staff.js"></script>
 </body>
 </html>

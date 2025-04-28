@@ -1,15 +1,8 @@
 <?php
-/**
- * API endpoint to receive orders from customer website
- * 
- * This endpoint implements the new architecture where the customer website
- * sends order requests to the staff server instead of directly modifying the database.
- */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/api_config.php';
 
-// Validate API key from request headers
 $headers = getallheaders();
 $apiKey = isset($headers['X-API-Key']) ? $headers['X-API-Key'] : '';
 
@@ -20,7 +13,6 @@ if ($apiKey !== API_KEY) {
     exit;
 }
 
-// Get and validate JSON input data
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
@@ -40,13 +32,10 @@ try {
     $mysqli = Database::getConnection();
     $mysqli->begin_transaction();
     
-    // Generate unique order number
     $order_number = 'ORD' . date('YmdHis') . rand(100, 999);
     
-    // Calculate order totals server-side for security
     $calculated_subtotal = 0;
     foreach ($cartItems as $item) {
-        // Ensure quantity and price are numeric and valid
         $quantity = filter_var($item['quantity'], FILTER_VALIDATE_INT);
         $price = filter_var($item['price'], FILTER_VALIDATE_FLOAT);
         $item_id = filter_var($item['item_id'], FILTER_VALIDATE_INT);
@@ -57,18 +46,16 @@ try {
         $calculated_subtotal += $price * $quantity;
     }
     
-    $tax_rate = 0.10; // Define tax rate on the server
+    $tax_rate = 0.10;
     $calculated_tax = $calculated_subtotal * $tax_rate;
-    $calculated_tip = max(0, $tip); // Ensure tip is not negative
+    $calculated_tip = max(0, $tip);
     $calculated_total = $calculated_subtotal + $calculated_tax + $calculated_tip;
     
-    // Insert into orders table using calculated total
     $stmt = $mysqli->prepare("INSERT INTO orders (order_number, customer_name, customer_phone, customer_email, order_total, status) VALUES (?, ?, ?, ?, ?, 'preparing')");
     if (!$stmt) {
         throw new Exception("Prepare statement failed for orders table.");
     }
     
-    // Use the server-calculated total
     $stmt->bind_param('ssssd', $order_number, $name, $mobile, $email, $calculated_total);
     $stmt->execute();
     if ($stmt->error) {
@@ -78,7 +65,6 @@ try {
     $order_id = $stmt->insert_id;
     $stmt->close();
     
-    // Insert order items
     $stmt = $mysqli->prepare("INSERT INTO order_items (order_id, item_id, quantity, item_price) VALUES (?, ?, ?, ?)");
     if (!$stmt) {
         throw new Exception("Prepare statement failed for order_items table.");
@@ -97,24 +83,19 @@ try {
     }
     $stmt->close();
     
-    // Commit the transaction
     $mysqli->commit();
     
-    // Trigger server-sent event for new order
-    // Use unified approach that works for both staff dashboard and customer
     $eventUrl = '../../api/order_status_events.php?order_id=' . $order_id . '&status=preparing&event_type=new_order';
     $absolutePath = realpath(__DIR__ . '/' . $eventUrl);
     
     if (file_exists($absolutePath)) {
         include_once $absolutePath;
     } else {
-        // Make an asynchronous HTTP request
         $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $path = explode('/staff', $_SERVER['REQUEST_URI'])[0] ?? '';
         $eventEndpoint = "$protocol://$host$path/api/order_status_events.php?order_id=$order_id&status=preparing&event_type=new_order";
         
-        // Non-blocking request
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $eventEndpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -133,7 +114,6 @@ try {
     ]);
     
 } catch (Exception $e) {
-    // Rollback transaction on error
     if (isset($mysqli) && $mysqli->ping()) {
         $mysqli->rollback();
     }

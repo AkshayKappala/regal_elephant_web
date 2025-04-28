@@ -10,7 +10,6 @@ if (!$order_id) {
 }
 
 try {
-    // Get order details
     $query = "SELECT * FROM orders WHERE order_id = ?";
     $stmt = $mysqli->prepare($query);
     $stmt->bind_param('i', $order_id);
@@ -22,7 +21,6 @@ try {
         exit;
     }
     
-    // Get order items
     $itemsQuery = "SELECT oi.*, fi.name 
                   FROM order_items oi 
                   JOIN food_items fi ON oi.item_id = fi.item_id 
@@ -47,7 +45,6 @@ try {
     </div>
     
     <div class="row">
-        <!-- Order Summary -->
         <div class="col-lg-8">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -88,7 +85,6 @@ try {
                 </div>
             </div>
             
-            <!-- Order Items -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Order Items</h5>
@@ -125,7 +121,7 @@ try {
                                     <td class="text-end">₹<?php echo number_format($subtotal, 2); ?></td>
                                 </tr>
                                 <?php 
-                                $tax = $subtotal * 0.10; // Assuming 10% tax rate
+                                $tax = $subtotal * 0.10;
                                 $tip = $order['order_total'] - ($subtotal + $tax);
                                 ?>
                                 <tr>
@@ -149,7 +145,6 @@ try {
             </div>
         </div>
         
-        <!-- Order Actions -->
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">

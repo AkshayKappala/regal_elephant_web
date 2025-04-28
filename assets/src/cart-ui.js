@@ -1,15 +1,6 @@
-/**
- * Cart UI functionality
- */
 import { updateCartBadge } from './ui.js';
 
-/**
- * Updates quantity displays in menu items based on cart contents
- * @param {HTMLElement} contentDiv - The content container element
- * @param {Object} cartItems - The cart items object
- */
 export function updateMenuQuantities(contentDiv, cartItems) {
-    // Update quantities for items that are in the cart
     for (const [itemId, cartItem] of Object.entries(cartItems)) {
         const qtySpanId = itemId + '-qty';
         const qtySpan = contentDiv.querySelector(`#${CSS.escape(qtySpanId)}`);
@@ -25,7 +16,6 @@ export function updateMenuQuantities(contentDiv, cartItems) {
         }
     }
 
-    // Reset quantities for items that are not in the cart
     contentDiv.querySelectorAll('.quantity-widget').forEach(widget => {
         const itemId = widget.getAttribute('data-item');
         const card = widget.closest('.menu-item-card');
@@ -46,15 +36,9 @@ export function updateMenuQuantities(contentDiv, cartItems) {
         }
     });
     
-    // Update the cart badge
     updateCartBadge();
 }
 
-/**
- * Attaches event listeners to quantity adjustment widgets
- * @param {HTMLElement} contentDiv - The content container element
- * @param {Object} cartItems - The cart items object
- */
 export function attachQuantityWidgetListeners(contentDiv, cartItems) {
     const widgets = contentDiv.querySelectorAll('.quantity-widget');
 

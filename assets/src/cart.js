@@ -12,7 +12,6 @@ window.renderCart = function() {
         return;
     }
 
-    // Load saved customer details if they exist
     const customerNameInput = document.getElementById('customer-name');
     const customerMobileInput = document.getElementById('customer-mobile');
     const customerEmailInput = document.getElementById('customer-email');
@@ -24,17 +23,14 @@ window.renderCart = function() {
         if (savedCustomerDetails.email) customerEmailInput.value = savedCustomerDetails.email;
     }
 
-    // Clear existing content
     cartDisplay.innerHTML = '';
     cartSummary.innerHTML = '';
     placeOrderContainer.innerHTML = '';
 
-    // Initialize variables
     let subtotal = 0;
     const taxRate = 0.10;
     const defaultTipRate = 0.10;
 
-    // Check if cart is empty
     const cartIsEmpty = Object.keys(window.cartItems).length === 0;
 
     if (cartIsEmpty) {
@@ -51,7 +47,6 @@ window.renderCart = function() {
         }
     }
 
-    // Create cart items table
     const table = document.createElement('table');
     table.className = 'table cart-items-table';
     table.innerHTML = `
@@ -68,7 +63,6 @@ window.renderCart = function() {
     `;
     const tbody = table.querySelector('tbody');
 
-    // Add cart items to table
     for (const [itemId, item] of Object.entries(window.cartItems)) {
         const itemTotal = item.price * item.quantity;
         subtotal += itemTotal;
@@ -84,7 +78,6 @@ window.renderCart = function() {
 
     cartDisplay.appendChild(table);
 
-    // Function to render the summary part
     const renderSummary = () => {
         cartSummary.innerHTML = '';
 
@@ -121,7 +114,6 @@ window.renderCart = function() {
         cartSummary.appendChild(summaryTable);
     };
 
-    // Setup tip input
     if (!tipInput.dataset.listenerAttached) {
         tipInput.value = (subtotal * defaultTipRate).toFixed(2);
         tipInput.addEventListener('input', renderSummary);
@@ -135,14 +127,12 @@ window.renderCart = function() {
 
     renderSummary();
 
-    // Create place order button
     const placeOrderButton = document.createElement('button');
     placeOrderButton.className = 'btn btn-custom';
     placeOrderButton.textContent = 'Place Order';
     placeOrderButton.type = 'submit';
     placeOrderButton.setAttribute('form', 'customer-details-form');
 
-    // Setup form submission handling
     const customerForm = document.getElementById('customer-details-form');
     if (customerForm && !customerForm.dataset.submitListenerAttached) {
         customerForm.addEventListener('submit', placeOrderHandler);
@@ -175,7 +165,6 @@ async function placeOrderHandler(event) {
         quantity: item.quantity
     }));
     
-    // Get item IDs from API
     let itemIdData;
     try {
         const itemIdResp = await fetch('api/get_item_ids.php', {
@@ -254,7 +243,6 @@ async function placeOrderHandler(event) {
         }
         localStorage.setItem('order_history', JSON.stringify(orderHistory));
 
-        // Update the orders notification badge immediately
         if(typeof window.initializeOrdersBadge === 'function') {
             window.initializeOrdersBadge();
         }

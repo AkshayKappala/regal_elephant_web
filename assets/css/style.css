@@ -305,72 +305,67 @@ body {
     font-size: 1.2rem;
 }
 
-/* Styles for Customer Details Form */
 #customer-details-section h3 {
     color: #eadab0;
     font-family: "Marko One", serif;
-    margin-bottom: 1.5rem; /* More space below heading */
+    margin-bottom: 1.5rem;
 }
 
 #customer-details-form .form-label {
-    color: #d4c3a2; /* Lighter text for labels */
+    color: #d4c3a2;
     font-family: "Fredoka", sans-serif;
 }
 
-/* Make labels align nicely with inputs in horizontal form */
 #customer-details-form .col-form-label {
-    padding-top: calc(0.375rem + 1px); /* Vertically center label with input */
+    padding-top: calc(0.375rem + 1px);
     padding-bottom: calc(0.375rem + 1px);
     line-height: 1.5;
-    text-align: right; /* Align label text to the right */
+    text-align: right;
 }
 
 #customer-details-form .form-control {
-    background-color: transparent; /* Make background transparent */
-    border: 1px solid rgba(234, 218, 176, 0.3); /* Subtle border */
-    color: #eadab0; /* Input text color */
+    background-color: transparent;
+    border: 1px solid rgba(234, 218, 176, 0.3);
+    color: #eadab0;
     font-family: "Fredoka", sans-serif;
 }
 
 #customer-details-form .form-control:focus {
-    background-color: rgba(234, 218, 176, 0.1); /* Slightly less transparent on focus */
+    background-color: rgba(234, 218, 176, 0.1);
     border-color: #eadab0;
     color: #eadab0;
-    box-shadow: 0 0 0 0.25rem rgba(234, 218, 176, 0.25); /* Focus glow */
+    box-shadow: 0 0 0 0.25rem rgba(234, 218, 176, 0.25);
 }
 
-/* Style placeholder text */
 #customer-details-form .form-control::placeholder {
     color: rgba(234, 218, 176, 0.5);
-    opacity: 1; /* Override bootstrap default */
+    opacity: 1;
 }
 
-/* Order Confirmation Card Styles */
 .order-confirmation-card {
-    background: transparent; /* Make background transparent */
-    border: 1px solid rgba(234, 218, 176, 0.2); /* Add a subtle border for visibility */
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1); /* Keep or adjust shadow */
+    background: transparent;
+    border: 1px solid rgba(234, 218, 176, 0.2);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
 }
 
 .order-card-header {
-    background-color: rgba(0, 0, 0, 0.15); /* Slightly darker header */
+    background-color: rgba(0, 0, 0, 0.15);
     border-bottom: 1px solid #a04b25;
     padding: 1rem 1.25rem;
 }
 
 .order-card-header .menu-item-name {
-    margin-bottom: 0.25rem; /* Space between title and order number */
+    margin-bottom: 0.25rem;
 }
 
 .order-number-display {
     font-size: 0.9rem;
-    color: #d4c3a2; /* Consistent muted text color */
+    color: #d4c3a2;
 }
 
-/* Added style for timestamp */
 .order-time-display {
     font-size: 0.8rem;
-    color: #b8a88a; /* Even more muted color */
+    color: #b8a88a;
     margin-top: 0.2rem;
 }
 
@@ -379,12 +374,12 @@ body {
 }
 
 .order-card-body p {
-    margin-bottom: 0.75rem; /* Consistent paragraph spacing */
+    margin-bottom: 0.75rem;
     color: #eadab0;
 }
 
 .order-card-body p strong {
-    color: #f5e7c8; /* Slightly brighter label */
+    color: #f5e7c8;
 }
 
 .order-card-body h5 {
@@ -392,7 +387,6 @@ body {
     font-family: "Fredoka", sans-serif;
 }
 
-/* Use cart-items-table styles defined earlier */
 .order-card-body .cart-items-table {
     margin-top: 1rem;
     margin-bottom: 1rem;
@@ -405,18 +399,17 @@ body {
 }
 
 .order-total-display .fw-bold {
-    color: #f5e7c8; /* Brighter total amount */
+    color: #f5e7c8;
 }
 
-/* Status Badge */
 .badge.bg-warning {
-    background-color: #ffc107 !important; /* Ensure Bootstrap override */
-    color: #333 !important; /* Dark text for yellow background */
+    background-color: #ffc107 !important;
+    color: #333 !important;
     font-family: "Fredoka", sans-serif;
     font-size: 0.9em;
 }
 
 .badge.bg-info {
-    background-color: #28a745 !important; /* Override to green color for completed orders */
+    background-color: #28a745 !important;
     color: #fff !important;
 }
