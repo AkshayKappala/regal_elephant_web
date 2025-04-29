@@ -1,5 +1,4 @@
 <style>
-    /* Custom styling for order tabs */
     #orders-tabs {
         border-bottom: 2px solid #a04b25;
     }
@@ -27,7 +26,6 @@
         border-bottom: 3px solid #eadab0;
     }
     
-    /* Custom styling for empty orders message */
     .empty-orders-message {
         background-color: rgba(234, 218, 176, 0.1);
         border: 1px solid rgba(234, 218, 176, 0.3);
@@ -50,7 +48,6 @@
 <div class="container py-4">
     <h1 class="text-center mb-4">Your Orders</h1>
     
-    <!-- Tabs for Active Orders and Order History -->
     <ul class="nav nav-tabs mb-4 justify-content-center" id="orders-tabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="active-orders-tab" data-bs-toggle="tab" data-bs-target="#active-orders" type="button" role="tab" aria-controls="active-orders" aria-selected="true">Active Orders</button>
@@ -60,20 +57,15 @@
         </li>
     </ul>
     
-    <!-- Tab Content -->
     <div class="tab-content" id="orders-tab-content">
-        <!-- Active Orders Tab -->
         <div class="tab-pane fade show active" id="active-orders" role="tabpanel" aria-labelledby="active-orders-tab">
             <div id="active-orders-section" class="row justify-content-center g-4">
-                <!-- Active orders will be loaded here -->
                 <div class='col-12'><div class='alert alert-info text-center'>Loading active orders...</div></div>
             </div>
         </div>
         
-        <!-- Order History Tab -->
         <div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
             <div id="order-history-section" class="row justify-content-center g-4">
-                <!-- Order history will be loaded here -->
                 <div class='col-12'><div class='alert alert-info text-center'>Loading order history...</div></div>
             </div>
         </div>
@@ -87,12 +79,9 @@ import { addOrderEventListener } from './assets/src/events.js';
     const orderHistorySection = document.getElementById('order-history-section');
     let orderHistory = JSON.parse(localStorage.getItem('order_history') || '[]');
 
-    // Active order statuses
-    const activeStatuses = ['preparing', 'ready']; // Removed 'picked up' from active statuses
-    // History statuses
-    const historyStatuses = ['archived', 'cancelled', 'picked up']; // Added 'picked up' to history statuses
+    const activeStatuses = ['preparing', 'ready']; 
+    const historyStatuses = ['archived', 'cancelled', 'picked up']; 
 
-    // Function to handle initial orders display
     function displayOrders() {
         if (!orderHistory || orderHistory.length === 0) {
             activeOrdersSection.innerHTML =
@@ -102,7 +91,6 @@ import { addOrderEventListener } from './assets/src/events.js';
             return;
         }
 
-        // Show loading indicators
         activeOrdersSection.innerHTML = 
             `<div class='col-12 text-center'><div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -112,19 +100,15 @@ import { addOrderEventListener } from './assets/src/events.js';
                 <span class="visually-hidden">Loading...</span>
             </div></div>`;
             
-        // Launch async loading process
         loadOrderDetails();
     }
 
-    // Function to fetch and render all orders
     async function loadOrderDetails() {
         try {
-            // Show latest orders first by reversing the history
             const reversedOrderHistory = orderHistory.slice().reverse();
             const orderPromises = reversedOrderHistory.map(orderId => renderOrder(orderId));
             const orderResults = await Promise.all(orderPromises);
             
-            // Separate active orders from history
             const activeOrdersHtml = [];
             const orderHistoryHtml = [];
             
@@ -138,7 +122,6 @@ import { addOrderEventListener } from './assets/src/events.js';
                 }
             });
             
-            // Update the sections
             if (activeOrdersHtml.length > 0) {
                 activeOrdersSection.innerHTML = activeOrdersHtml.join('');
             } else {
@@ -159,7 +142,6 @@ import { addOrderEventListener } from './assets/src/events.js';
         }
     }
 
-    // Function to fetch and render a single order
     async function renderOrder(orderId) {
         try {
             console.log(`Fetching details for order ${orderId}`);
@@ -189,7 +171,6 @@ import { addOrderEventListener } from './assets/src/events.js';
                               </tr>`;
             });
 
-            // Determine badge color class based on status
             let badgeClass = 'bg-warning text-dark';
             if (order.status === 'ready') {
                 badgeClass = 'bg-success text-white';
@@ -201,7 +182,6 @@ import { addOrderEventListener } from './assets/src/events.js';
                 badgeClass = 'bg-secondary text-white';
             }
 
-            // Return the HTML string for this order card and its status
             return {
                 html: `
                 <div class='col-md-8 order-card' data-order-id="${order.order_id}" data-order-status="${order.status}">
@@ -251,7 +231,6 @@ import { addOrderEventListener } from './assets/src/events.js';
         if (!order || !order.order_id) return;
         
         const orderId = order.order_id;
-        // Try both selectors to ensure we find the card
         let existingCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
         if (!existingCard) {
             existingCard = document.querySelector(`div[data-order-id="${orderId}"]`);
@@ -261,13 +240,11 @@ import { addOrderEventListener } from './assets/src/events.js';
         
         console.log(`Updating order ${orderId} status to ${newStatus}, card exists: ${!!existingCard}`);
         
-        // Only force reload if the status has actually changed
-        // This prevents constant reloading of cards
         if (existingCard) {
             const currentStatus = existingCard.getAttribute('data-order-status');
             if (currentStatus === newStatus) {
                 console.log(`Order ${orderId} already has status ${newStatus}, skipping update`);
-                return; // Skip update if status hasn't changed
+                return; 
             }
             
             console.log(`Status changed from ${currentStatus} to ${newStatus}, updating card`);
@@ -275,25 +252,21 @@ import { addOrderEventListener } from './assets/src/events.js';
         
         // If the card doesn't exist, we need to add it
         if (!existingCard) {
-            // Fetch the full order details and render it with cache-busting
             renderOrder(orderId).then(result => {
                 if (result.html) {
                     const targetSection = isActiveOrder(newStatus) ? activeOrdersSection : orderHistorySection;
                     
-                    // Add to the top of the list
                     if (targetSection.firstChild) {
                         targetSection.insertAdjacentHTML('afterbegin', result.html);
                     } else {
                         targetSection.innerHTML = result.html;
                     }
                     
-                    // Replace empty message if it exists
                     const emptyMessage = targetSection.querySelector('.empty-orders-message');
                     if (emptyMessage) {
                         emptyMessage.closest('.col-12').remove();
                     }
                     
-                    // Add the order to local history if it doesn't exist
                     if (!orderHistory.includes(orderId)) {
                         orderHistory.push(orderId);
                         localStorage.setItem('order_history', JSON.stringify(orderHistory));
@@ -305,38 +278,31 @@ import { addOrderEventListener } from './assets/src/events.js';
             return;
         }
         
-        // If card exists and status changed, update it
         const currentStatus = existingCard.getAttribute('data-order-status');
         
         if (currentStatus !== newStatus) {
             console.log(`Status changed from ${currentStatus} to ${newStatus}`);
             
-            // Update status in localStorage
             if (typeof window.updateOrderStatus === 'function') {
                 window.updateOrderStatus(orderId, newStatus);
             }
             
-            // Check if we need to move the card to a different section
             const isCurrentActive = isActiveOrder(currentStatus);
             const isNewActive = isActiveOrder(newStatus);
             
             if (isCurrentActive !== isNewActive) {
-                // Remove card from current section
                 existingCard.remove();
                 
-                // Re-render the order in the new section
                 renderOrder(orderId).then(result => {
                     if (result.html) {
                         const targetSection = isNewActive ? activeOrdersSection : orderHistorySection;
                         
-                        // Add to the top of the list
                         if (targetSection.firstChild) {
                             targetSection.insertAdjacentHTML('afterbegin', result.html);
                         } else {
                             targetSection.innerHTML = result.html;
                         }
                         
-                        // Replace empty list message if it exists
                         const emptyMessage = targetSection.querySelector('.empty-orders-message');
                         if (emptyMessage) {
                             emptyMessage.closest('.col-12').remove();
@@ -346,13 +312,11 @@ import { addOrderEventListener } from './assets/src/events.js';
                     }
                 });
             } else {
-                // Just update the status badge
                 const statusBadge = existingCard.querySelector('.order-status');
                 if (statusBadge) {
                     statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                     existingCard.setAttribute('data-order-status', newStatus);
                     
-                    // Update badge color based on status
                     statusBadge.className = 'badge order-status';
                     if (newStatus === 'preparing') {
                         statusBadge.classList.add('bg-warning', 'text-dark');
@@ -374,17 +338,14 @@ import { addOrderEventListener } from './assets/src/events.js';
         }
     }
     
-    // Helper function to check if a status is considered active
     function isActiveOrder(status) {
         return activeStatuses.includes(status) && !historyStatuses.includes(status);
     }
 
-    // Register event listeners for order events
     addOrderEventListener('order_update', function(data) {
         if (data.order) {
             console.log('Received order_update event with data:', data.order);
             updateOrderCard(data.order);
-            // Update the orders badge in the navbar
             if (typeof window.initializeOrdersBadge === 'function') {
                 window.initializeOrdersBadge();
             }
@@ -397,23 +358,17 @@ import { addOrderEventListener } from './assets/src/events.js';
             data.orders.forEach(order => {
                 updateOrderCard(order);
             });
-            // Update the orders badge in the navbar
             if (typeof window.initializeOrdersBadge === 'function') {
                 window.initializeOrdersBadge();
             }
         }
     });
 
-    // Initialize the orders display
     displayOrders();
     
-    // Set up a periodic refresh to ensure we always have the latest order status
-    // This serves as a backup in case SSE fails
     setInterval(() => {
         if (orderHistory.length > 0) {
-            // Refresh each order one at a time to avoid overwhelming the server
             orderHistory.forEach((orderId, index) => {
-                // Stagger the requests
                 setTimeout(() => {
                     console.log(`Periodic refresh for order ${orderId}`);
                     fetch(`api/get_order_details.php?order_id=${orderId}&_nocache=${Date.now()}`)
@@ -424,9 +379,9 @@ import { addOrderEventListener } from './assets/src/events.js';
                             }
                         })
                         .catch(error => console.error(`Error refreshing order ${orderId}:`, error));
-                }, index * 500); // Stagger by 500ms per order
+                }, index * 500);
             });
         }
-    }, 15000); // Refresh every 15 seconds
+    }, 15000);
 })();
 </script>

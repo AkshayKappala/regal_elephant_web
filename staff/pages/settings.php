@@ -89,25 +89,20 @@
 </div>
 
 <script>
-// For demonstration purposes - these would be connected to real API endpoints in a production environment
 document.getElementById('password-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    // Password updated successfully
     console.log('Password updated successfully');
     
-    // Optional visual feedback: add a success message to the form
     const feedbackDiv = document.createElement('div');
     feedbackDiv.className = 'alert alert-success mt-3';
     feedbackDiv.textContent = 'Password updated successfully!';
     this.appendChild(feedbackDiv);
     
-    // Remove message after a delay
     setTimeout(() => {
         feedbackDiv.remove();
     }, 3000);
 });
 
-// Archive Orders Functionality
 document.addEventListener('DOMContentLoaded', function() {
     const confirmCheck = document.getElementById('confirmArchiveCheck');
     const archiveBtn = document.getElementById('confirmArchiveOrdersBtn');
@@ -118,11 +113,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         archiveBtn.addEventListener('click', function() {
-            // Show loading state
             this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Archiving...';
             this.disabled = true;
             
-            // Call the API to archive all orders
             fetch('api/delete_all_orders.php', {
                 method: 'POST',
                 headers: {
@@ -132,23 +125,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if(data.success) {
-                    // Hide the modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('archiveOrdersModal'));
                     modal.hide();
                     
-                    // Log success
                     console.log('All orders have been successfully archived.');
                     
-                    // Reset checkbox
                     confirmCheck.checked = false;
                     archiveBtn.disabled = true;
                     
-                    // Reload dashboard stats to reflect changes
                     if(typeof updateOrderStats === 'function') {
                         updateOrderStats();
                     }
                     
-                    // Optional: Add visual feedback on the page
                     const settingsCard = document.querySelector('.card-body');
                     if (settingsCard) {
                         const feedbackDiv = document.createElement('div');
@@ -156,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         feedbackDiv.textContent = 'All orders have been successfully archived.';
                         settingsCard.appendChild(feedbackDiv);
                         
-                        // Remove the message after a delay
                         setTimeout(() => {
                             feedbackDiv.remove();
                         }, 3000);
@@ -167,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Display error in the modal
                 const modalBody = document.querySelector('#archiveOrdersModal .modal-body');
                 if (modalBody) {
                     const errorDiv = document.createElement('div');
@@ -175,14 +161,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDiv.textContent = 'Error: ' + error.message;
                     modalBody.appendChild(errorDiv);
                     
-                    // Remove message after some time
                     setTimeout(() => {
                         errorDiv.remove();
                     }, 5000);
                 }
             })
             .finally(() => {
-                // Reset button state
                 this.innerHTML = 'Archive All Orders';
                 this.disabled = false;
             });

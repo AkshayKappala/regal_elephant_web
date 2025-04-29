@@ -2,9 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 $mysqli = Database::getConnection();
 
-// We fetch all orders in a single query with no filtering
 try {
-    // Get all orders in a single query with SUM(quantity)
     $query = "SELECT o.*, 
               (SELECT SUM(quantity) FROM order_items WHERE order_id = o.order_id) as item_count 
               FROM orders o 
@@ -21,7 +19,6 @@ try {
 <div class="container-fluid">
     <h1 class="page-title">Orders Management</h1>
     
-    <!-- Loader that will show during initial page load -->
     <div id="orders-loader" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading orders...</span>
@@ -29,7 +26,6 @@ try {
         <p class="mt-2">Loading orders...</p>
     </div>
     
-    <!-- Active Orders Table - Initially hidden -->
     <div class="card mb-4" id="active-orders-container" style="display: none;">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">Active Orders</h5>
@@ -53,7 +49,6 @@ try {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Active orders will be populated by JavaScript -->
                             <tr>
                                 <td colspan="8" class="text-center">No active orders.</td>
                             </tr>
@@ -64,7 +59,6 @@ try {
         </div>
     </div>
     
-    <!-- Archived Orders Table - Initially hidden -->
     <div class="card" id="archived-orders-container" style="display: none;">
         <div class="card-header bg-secondary text-white">
             <h5 class="mb-0">Archived Orders</h5>
@@ -88,7 +82,6 @@ try {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Archived orders will be populated by JavaScript -->
                             <tr>
                                 <td colspan="8" class="text-center">No archived orders.</td>
                             </tr>
@@ -101,30 +94,23 @@ try {
 </div>
 
 <script>
-// Global variable to store all orders
 let allOrders = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initial load
     loadAllOrders();
     
-    // Setup auto-refresh every 30 seconds
     setInterval(loadAllOrders, 30000);
     
-    // Setup SSE for real-time updates
     setupOrderEventListeners();
 });
 
-// Function to load all orders from the database
 function loadAllOrders() {
     const ordersLoader = document.getElementById('orders-loader');
     const activeOrdersContainer = document.getElementById('active-orders-container');
     const archivedOrdersContainer = document.getElementById('archived-orders-container');
     
-    // Show loader immediately
     if (ordersLoader) ordersLoader.style.display = 'block';
     
-    // Show containers with loading indicators in their tables
     if (activeOrdersContainer) {
         activeOrdersContainer.style.display = 'block';
         const activeTableBody = document.querySelector('#active-orders-table tbody');
@@ -141,7 +127,6 @@ function loadAllOrders() {
         }
     }
     
-    // Fetch all orders from the database with cache busting
     fetch(`api/get_orders_list.php?limit=500&_nocache=${Date.now()}`)
         .then(response => {
             if (!response.ok) {
@@ -151,16 +136,12 @@ function loadAllOrders() {
         })
         .then(data => {
             if (data.success) {
-                // Store orders globally
                 allOrders = data.orders;
                 
-                // Update the tables
                 updateOrdersTables();
                 
-                // Hide loader
                 if (ordersLoader) ordersLoader.style.display = 'none';
                 
-                // Log successful refresh
                 console.log(`Successfully refreshed orders at ${new Date().toLocaleTimeString()}`);
             } else {
                 throw new Error(data.error || 'Failed to load orders');
@@ -169,7 +150,6 @@ function loadAllOrders() {
         .catch(error => {
             console.error('Error fetching orders:', error);
             
-            // Show error message in tables
             if (activeOrdersContainer) {
                 const activeTableBody = document.querySelector('#active-orders-table tbody');
                 if (activeTableBody) {
@@ -184,35 +164,27 @@ function loadAllOrders() {
                 }
             }
             
-            // Hide loader
             if (ordersLoader) ordersLoader.style.display = 'none';
         });
 }
 
-// Function to update both orders tables
 function updateOrdersTables() {
-    // Separate active and archived orders
     const activeOrders = allOrders.filter(order => order.status !== 'archived');
     const archivedOrders = allOrders.filter(order => order.status === 'archived');
     
-    // Update active orders table
     updateTableRows('#active-orders-table tbody', activeOrders);
     
-    // Update archived orders table
     updateTableRows('#archived-orders-table tbody', archivedOrders);
     
-    // Re-attach event listeners for the new buttons
     if (typeof setupStatusChangeHandlers === 'function') {
         setupStatusChangeHandlers();
     }
 }
 
-// Function to update rows in a specific table
 function updateTableRows(tableSelector, orders) {
     const tableBody = document.querySelector(tableSelector);
     if (!tableBody) return;
     
-    // Clear existing rows
     tableBody.innerHTML = '';
     
     if (orders.length === 0) {
@@ -220,7 +192,6 @@ function updateTableRows(tableSelector, orders) {
         emptyRow.innerHTML = '<td colspan="8" class="text-center">No orders found.</td>';
         tableBody.appendChild(emptyRow);
     } else {
-        // Create and append all rows at once with complete HTML
         const rowsHTML = orders.map(order => {
             let formattedDate;
             if (typeof formatDate === 'function') {
@@ -230,7 +201,6 @@ function updateTableRows(tableSelector, orders) {
                 formattedDate = `${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}, ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
             }
             
-            // Set contact info to a dash initially, and only replace it if we have actual data
             let contactInfo = '-';
             if (order.customer_phone || order.customer_email) {
                 if (typeof formatContactInfo === 'function') {
@@ -283,26 +253,17 @@ function updateTableRows(tableSelector, orders) {
     }
 }
 
-// Update local orders data with new orders or updates
 function updateLocalOrdersData(updatedOrders) {
     if (!updatedOrders || updatedOrders.length === 0) return;
     
     updatedOrders.forEach(updatedOrder => {
-        // Find if we already have this order
         const existingOrderIndex = allOrders.findIndex(o => o.order_id == updatedOrder.order_id);
         
         if (existingOrderIndex >= 0) {
-            // For existing orders, we only need to update the status
-            // and preserve the rest of the data, especially the item count and contact info
             const existingOrder = allOrders[existingOrderIndex];
             
-            // Update only the status field
             existingOrder.status = updatedOrder.status;
-            
-            // Don't update item_count as we want to preserve the SUM(quantity) value
-            // Don't update contact info either
         } else {
-            // For new orders, add them to the beginning of the array
             allOrders.unshift(updatedOrder);
         }
     });
@@ -316,7 +277,6 @@ function setupOrderEventListeners() {
     }
     
     console.log('Setting up SSE connection at', new Date().toLocaleTimeString());
-    // Add a timestamp and cache-busting parameter
     const evtSource = new EventSource(`../api/order_events.php?client=staff&_nocache=${Date.now()}`);
     
     evtSource.addEventListener('connection', function(e) {
@@ -329,10 +289,8 @@ function setupOrderEventListeners() {
             const data = JSON.parse(e.data);
             if (data.orders && data.orders.length > 0) {
                 console.log('Orders update contains', data.orders.length, 'orders');
-                // Update our local orders data
                 updateLocalOrdersData(data.orders);
                 
-                // Redraw the tables
                 updateOrdersTables();
             }
         } catch (err) {
@@ -346,10 +304,8 @@ function setupOrderEventListeners() {
             const data = JSON.parse(e.data);
             if (data.order) {
                 console.log('Order update received for order ID:', data.order.order_id, 'with status:', data.order.status);
-                // Update our local orders data
                 updateLocalOrdersData([data.order]);
                 
-                // Redraw the tables
                 updateOrdersTables();
             }
         } catch (err) {
@@ -357,7 +313,6 @@ function setupOrderEventListeners() {
         }
     });
     
-    // Add handler for new general events
     evtSource.addEventListener('events_update', function(e) {
         console.log('Received events_update event at', new Date().toLocaleTimeString());
         try {
@@ -372,14 +327,11 @@ function setupOrderEventListeners() {
         }
     });
     
-    // Add a general message handler to catch all events
     evtSource.addEventListener('message', function(e) {
         console.log('Received generic message event at', new Date().toLocaleTimeString());
         try {
-            // Try to parse the data to see what we got
             const data = JSON.parse(e.data);
             console.log('Generic message event data:', data);
-            // Refresh orders as a fallback
             loadAllOrders();
         } catch (err) {
             console.error('Error processing generic message event:', err);
@@ -396,7 +348,6 @@ function setupOrderEventListeners() {
         }, 5000);
     });
     
-    // Handle visibility changes - refresh when page becomes visible again
     document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible') {
             console.log('Page became visible, refreshing orders');
@@ -404,14 +355,12 @@ function setupOrderEventListeners() {
         }
     });
     
-    // Clean up on page unload
     window.addEventListener('beforeunload', function() {
         console.log('Closing SSE connection due to page unload');
         evtSource.close();
     });
 }
 
-// Alias functions for compatibility with existing code
 function refreshOrdersTable() {
     loadAllOrders();
 }
